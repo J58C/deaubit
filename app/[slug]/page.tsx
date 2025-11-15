@@ -28,9 +28,9 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
           </p>
           <Link
             href="/"
-            className="db-btn-primary inline-flex items-center justify-center gap-2 mt-2 text-xs"
+            className="db-btn-ghost inline-flex items-center justify-center gap-2 text-xs w-full sm:w-auto"
           >
-            Kembali ke dashboard
+            Kembali ke halaman utama
           </Link>
         </div>
       </div>

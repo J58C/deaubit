@@ -13,11 +13,12 @@ export default function PageWrapperClient({
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  const isLogin = pathname === "/login";
+  const isLogin = pathname === "/";
+
   const isSlugPage =
     segments.length === 1 &&
     pathname !== "/" &&
-    pathname !== "/login" &&
+    pathname !== "/dash" &&
     !pathname.startsWith("/api");
 
   if (isSlugPage) {
@@ -37,7 +38,7 @@ export default function PageWrapperClient({
   }
 
   return (
-    <div className="min-h-screen flex px-4 items-start justify-center py-6 md:py-8">
+    <div className="min-h-screen flex px-4 items-center md:items-start justify-center py-6 md:py-8">
       <AppShell>{children}</AppShell>
     </div>
   );

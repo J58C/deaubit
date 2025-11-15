@@ -1,3 +1,5 @@
+//proxy.ts
+
 import { NextRequest, NextResponse } from "next/server";
 
 const SESSION_COOKIE_NAME = "admin_session";
@@ -5,6 +7,7 @@ const SESSION_COOKIE_NAME = "admin_session";
 const RESERVED_SLUGS = new Set([
   "",
   "login",
+  "dash",
   "api",
   "favicon.ico",
   "robots.txt",
@@ -13,9 +16,11 @@ const RESERVED_SLUGS = new Set([
 
 function isPublicPath(pathname: string): boolean {
   if (
+    pathname === "/" ||
     pathname === "/login" ||
     pathname === "/api/login" ||
     pathname === "/api/logout" ||
+    pathname === "/api/public-links" ||
     pathname === "/favicon.ico" ||
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml"
@@ -46,7 +51,7 @@ function isAuthenticated(req: NextRequest): boolean {
 }
 
 export default function proxy(req: NextRequest) {
-  const { pathname, search } = req.nextUrl;
+  const { pathname } = req.nextUrl;
 
   if (
     pathname.startsWith("/_next") ||
@@ -63,18 +68,17 @@ export default function proxy(req: NextRequest) {
   }
 
   if (isPublicPath(pathname)) {
-    if (authed && pathname === "/login") {
+    if (authed && pathname === "/") {
+      return NextResponse.redirect(new URL("/dash", req.url));
+    }
+    if (pathname === "/login") {
       return NextResponse.redirect(new URL("/", req.url));
     }
     return NextResponse.next();
   }
 
   if (!authed) {
-    const loginUrl = new URL("/login", req.url);
-    const nextPath = pathname + (search || "");
-    if (pathname !== "/") {
-      loginUrl.searchParams.set("next", nextPath);
-    }
+    const loginUrl = new URL("/", req.url);
     return NextResponse.redirect(loginUrl);
   }
 

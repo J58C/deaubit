@@ -11,7 +11,7 @@ export default function AppShell({
 }) {
   const pathname = usePathname();
 
-  const isLogin = pathname === "/login";
+  const isLogin = pathname === "/";
   const maxWidth = isLogin ? "max-w-3xl" : "max-w-5xl";
 
   return (
