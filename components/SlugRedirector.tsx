@@ -1,3 +1,5 @@
+//components/SlugRedirector.tsx
+
 "use client";
 
 import { useEffect, useState, CSSProperties } from "react";
@@ -33,8 +35,7 @@ export default function SlugRedirector({ target, delay = 10 }: { target: string;
   const progress = Math.min(100, ((totalMs - remainingMs) / totalMs) * 100);
 
   const barStyle: CSSProperties = {
-    // dipakai di CSS via var(--db-progress)
-    ["--db-progress" as any]: `${progress}%`,
+    ["--db-progress" as string]: `${progress}%`,
   };
 
   return (

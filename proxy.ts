@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const AUTH_COOKIE_NAME = "deaubit_token";
+const SESSION_COOKIE_NAME = "admin_session";
 
 const RESERVED_SLUGS = new Set([
   "",
@@ -22,32 +22,30 @@ function isPublicPath(pathname: string): boolean {
   ) {
     return true;
   }
+
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/static")) return true;
   if (pathname.startsWith("/images")) return true;
+
   return false;
 }
 
 function isShortlinkPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length !== 1) return false;
+
   const slug = segments[0];
   if (RESERVED_SLUGS.has(slug)) return false;
-  return true;
-}
 
-function getAuthToken(req: NextRequest): string | null {
-  const cookie = req.cookies.get(AUTH_COOKIE_NAME);
-  return cookie?.value ?? null;
+  return true;
 }
 
 function isAuthenticated(req: NextRequest): boolean {
-  const token = getAuthToken(req);
-  if (!token) return false;
-  return true;
+  const cookie = req.cookies.get(SESSION_COOKIE_NAME);
+  return !!cookie?.value;
 }
 
-export function middleware(req: NextRequest) {
+export default function proxy(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   if (

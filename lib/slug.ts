@@ -1,3 +1,5 @@
+//lib/slug.ts
+
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 export function generateRandomSlug(length = 6): string {

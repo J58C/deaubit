@@ -1,57 +1,64 @@
-// src/lib/auth.ts
-import { SignJWT, jwtVerify, JWTPayload } from "jose";
+// lib/auth.ts
 
-const encoder = new TextEncoder();
+import jwt, { JwtPayload, Secret } from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET || "dev-secret-change-me";
-  return encoder.encode(secret);
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret) {
+  throw new Error("JWT_SECRET is not set");
+}
+const JWT_SECRET: Secret = rawSecret;
+
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+  throw new Error(
+    "ADMIN_USERNAME dan ADMIN_PASSWORD wajib diset di environment variable"
+  );
 }
 
-/**
- * Verifikasi username + password admin.
- * Hanya single user, dari ENV.
- */
-export function verifyAdminCredentials(username: string, password: string): boolean {
-  const envUsername = process.env.ADMIN_USERNAME || "admin";
-  const envPassword = process.env.ADMIN_PASSWORD || "deauport-dev";
+export const SESSION_MAX_AGE = 60 * 60 * 24; // 24 jam (detik)
+export const SESSION_COOKIE_NAME = "admin_session";
 
-  return username === envUsername && password === envPassword;
+export interface AdminJwtPayload extends JwtPayload {
+  username: string;
+  role: "admin";
 }
 
-/**
- * Buat JWT untuk admin.
- */
-export async function createAdminJWT(username: string): Promise<string> {
-  const secret = getJwtSecret();
-
-  const token = await new SignJWT({
-    sub: "admin",
+export function signAdminJWT(username: string): string {
+  const payload: Pick<AdminJwtPayload, "username" | "role"> = {
     username,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("7d") // berlaku 7 hari
-    .sign(secret);
+    role: "admin",
+  };
 
-  return token;
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: SESSION_MAX_AGE,
+  });
 }
 
-/**
- * Verifikasi JWT; kalau invalid/expired → return null.
- */
-export async function verifyAdminJWT(
-  token: string,
-): Promise<JWTPayload & { username?: string } | null> {
+export function verifyAdminJWT(token: string): AdminJwtPayload | null {
   try {
-    const secret = getJwtSecret();
-    const { payload } = await jwtVerify(token, secret, {
-      algorithms: ["HS256"],
-    });
+    const decoded = jwt.verify(token, JWT_SECRET) as AdminJwtPayload | string;
 
-    if (payload.sub !== "admin") return null;
-    return payload as JWTPayload & { username?: string };
+    if (typeof decoded === "string") {
+      return null;
+    }
+
+    if (!decoded.username || decoded.role !== "admin") {
+      return null;
+    }
+
+    return decoded;
   } catch {
     return null;
   }
+}
+
+export async function verifyAdminCredentials(
+  inputUsername: string,
+  inputPassword: string
+): Promise<boolean> {
+  if (inputUsername !== ADMIN_USERNAME) return false;
+  return bcrypt.compare(inputPassword, ADMIN_PASSWORD!);
 }

@@ -1,3 +1,5 @@
+//components/CreateShortlinkCard.tsx
+
 interface CreateShortlinkCardProps {
   targetUrl: string;
   slug: string;

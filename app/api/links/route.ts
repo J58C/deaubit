@@ -1,8 +1,11 @@
+//app/api/links/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
 
 async function ensureAuth(req: NextRequest) {
+  void req
   return;
 }
 

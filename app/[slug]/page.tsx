@@ -1,3 +1,5 @@
+//app/[slug]/page.tsx
+
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import SlugRedirector from "@/components/SlugRedirector";
@@ -40,7 +42,7 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
       <div className="w-full max-w-md p-6 rounded-xl db-card db-card-pop text-center space-y-4 shadow-md">
         <p className="text-xs db-muted">Redirecting shortlink</p>
 
-        <h1 className="break-words text-sm font-medium">
+        <h1 className="wrap-break-word text-sm font-medium">
           {link.targetUrl}
         </h1>
 

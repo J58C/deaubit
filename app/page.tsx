@@ -88,7 +88,8 @@ export default function DashboardPage() {
         method: "POST",
         credentials: "include",
       });
-    } catch (e) {
+    } catch {
+
     } finally {
       window.location.href = "/login";
     }
@@ -117,7 +118,7 @@ export default function DashboardPage() {
   async function copyToClipboard(text: string) {
     try {
       await navigator.clipboard.writeText(text);
-    } catch (e) {
+    } catch {
       alert("Gagal menyalin ke clipboard");
     }
   }
@@ -125,7 +126,7 @@ export default function DashboardPage() {
   return (
     <>
       <div className="w-full max-w-5xl mx-auto space-y-5">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--db-border-soft)] pb-4">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-(--db-border-soft) pb-4">
           <div className="flex items-center gap-3">
             <DeauBitLogo size={38} />
             <div className="flex flex-col">
@@ -153,9 +154,9 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        <section className="flex flex-wrap items-center justify-between gap-4 border-b border-[var(--db-border-soft)] pb-4">
+        <section className="flex flex-wrap items-center justify-between gap-4 border-b border-(--db-border-soft) pb-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--db-accent-soft)] text-[var(--db-accent)]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-(--db-accent-soft) text-(--db-accent)">
               <svg
                 viewBox="0 0 24 24"
                 className="h-4 w-4"
@@ -243,7 +244,7 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <div className="rounded-lg border border-[var(--db-border-soft)] bg-[var(--db-surface-muted)] px-3 py-2 text-left">
+            <div className="rounded-lg border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-2 text-left">
               <p className="font-mono text-[0.7rem] break-all">
                 {selectedLink.targetUrl}
               </p>

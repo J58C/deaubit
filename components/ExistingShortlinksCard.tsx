@@ -1,3 +1,5 @@
+//components/ExistingShortlinksCard.tsx
+
 import { Eye, Copy, Trash2, Link2 } from "lucide-react";
 
 export interface ShortLink {
@@ -28,7 +30,7 @@ export function ExistingShortlinksCard({
 }: ExistingShortlinksCardProps) {
   return (
     <div className="db-card h-full flex flex-col overflow-hidden text-xs">
-      <div className="flex items-center justify-between border-b border-[var(--db-border-soft)] px-3 py-2.5">
+      <div className="flex items-center justify-between border-b border-(--db-border-soft) px-3 py-2.5">
         <div>
           <h2 className="text-[0.8rem] font-semibold">Existing shortlinks</h2>
           <p className="db-muted">
@@ -41,11 +43,11 @@ export function ExistingShortlinksCard({
       <div className="max-h-72 overflow-auto flex-1">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-[var(--db-border-soft)]">
+            <tr className="border-b border-(--db-border-soft)">
               <th className="px-3 py-2 text-left font-semibold db-muted">
                 Short URL
               </th>
-              <th className="px-3 py-2 text-left font-semibold db-muted w-[160px]">
+              <th className="px-3 py-2 text-left font-semibold db-muted w-40">
                 Target
               </th>
               <th className="px-3 py-2 text-right font-semibold db-muted">
@@ -68,7 +70,7 @@ export function ExistingShortlinksCard({
                 return (
                   <tr
                     key={link.id}
-                    className={`border-b border-[var(--db-border-soft)] ${
+                    className={`border-b border-(--db-border-soft) ${
                       index % 2 === 0
                         ? "bg-transparent"
                         : "bg-[rgba(148,163,184,0.04)]"
@@ -77,7 +79,7 @@ export function ExistingShortlinksCard({
                     <td className="px-3 py-2 align-top">
                       <a
                         href={shortUrl}
-                        className="inline-flex items-center gap-1 text-[var(--db-accent)]"
+                        className="inline-flex items-center gap-1 text-(--db-accent)"
                         target="_blank"
                         rel="noreferrer"
                       >

@@ -1,3 +1,5 @@
+//components/DeauBitLogo.tsx
+
 "use client";
 
 type DeauBitLogoProps = {
@@ -17,7 +19,6 @@ export default function DeauBitLogo({ size = 40 }: DeauBitLogoProps) {
         aria-hidden="true"
       >
         <defs>
-          {/* gradient lembut, agak miring */}
           <linearGradient id="db-grad-main" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#38bdf8" />
             <stop offset="50%" stopColor="#4f46e5" />
@@ -34,7 +35,6 @@ export default function DeauBitLogo({ size = 40 }: DeauBitLogoProps) {
           </radialGradient>
         </defs>
 
-        {/* lingkaran luar */}
         <circle
           cx="20"
           cy="20"
@@ -42,7 +42,6 @@ export default function DeauBitLogo({ size = 40 }: DeauBitLogoProps) {
           fill="url(#db-grad-main)"
         />
 
-        {/* glow halus di pojok kiri atas */}
         <circle
           cx="14"
           cy="10"
@@ -50,7 +49,6 @@ export default function DeauBitLogo({ size = 40 }: DeauBitLogoProps) {
           fill="url(#db-glow)"
         />
 
-        {/* “pil” miring di tengah, bikin logo lebih dinamis */}
         <rect
           x="10"
           y="14"
@@ -61,7 +59,6 @@ export default function DeauBitLogo({ size = 40 }: DeauBitLogoProps) {
           transform="rotate(-8 20 20)"
         />
 
-        {/* inisial dB */}
         <text
           x="19"
           y="21.5"

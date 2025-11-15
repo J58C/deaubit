@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* === DeauBit theme: color palette & utilities === */
-
-/* Light theme (unchanged / tetap) */
 :root {
   color-scheme: light;
 
@@ -22,20 +19,19 @@
   --db-danger-soft: #fee2e2;
 }
 
-/* Dark theme – versi baru, lebih “indigo/blue macOS-ish” */
 .dark {
   color-scheme: dark;
 
-  --db-bg: #020617;              /* background page */
-  --db-surface: #020617;         /* shell utama */
-  --db-surface-muted: #020617;   /* card akan pakai overlay sendiri */
+  --db-bg: #020617;
+  --db-surface: #020617;
+  --db-surface-muted: #020617;
   --db-border: #1e293b;
   --db-border-soft: #0f172a;
 
   --db-text: #e5e7eb;
   --db-text-muted: #9ca3af;
 
-  --db-accent: #38bdf8;          /* sky-400-ish */
+  --db-accent: #38bdf8;
   --db-accent-soft: #0b1120;
 
   --db-danger: #fb7185;
@@ -47,7 +43,6 @@ body {
   color: var(--db-text);
 }
 
-/* Animasi umum */
 @keyframes db-fade-up {
   from {
     opacity: 0;
@@ -63,7 +58,6 @@ body {
   animation: db-fade-up 0.28s ease-out;
 }
 
-/* Animasi khusus login (sedikit scale + blur feel) */
 @keyframes db-login-in {
   from {
     opacity: 0;
@@ -81,7 +75,6 @@ body {
   animation: db-login-in 0.32s ease-out;
 }
 
-/* Dot status */
 @keyframes db-pulse {
   0%, 100% {
     transform: scale(1);
@@ -101,7 +94,6 @@ body {
   animation: db-pulse 1.4s ease-in-out infinite;
 }
 
-/* Shell utama – gaya “macOS-ish” */
 .db-shell {
   border-radius: 1rem;
   background-color: var(--db-surface);
@@ -111,7 +103,6 @@ body {
     0 0 0 1px rgba(148, 163, 184, 0.06);
 }
 
-/* Card internal */
 .db-card {
   border-radius: 1rem;
   background-color: var(--db-surface-muted);
@@ -119,7 +110,6 @@ body {
   box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
 }
 
-/* Card di dark mode sedikit translucent */
 .dark .db-card {
   background: radial-gradient(circle at top left, #0b1120 0, #020617 55%);
   border-color: rgba(15, 23, 42, 0.9);
@@ -128,7 +118,6 @@ body {
     0 0 0 1px rgba(15, 23, 42, 0.9);
 }
 
-/* Efek hover sedikit naik (kalau dipakai) */
 .db-card-raise {
   transition: transform 0.18s ease-out, box-shadow 0.18s ease-out,
     border-color 0.18s ease-out;
@@ -142,7 +131,6 @@ body {
   border-color: rgba(148, 163, 184, 0.7);
 }
 
-/* Input & fokus */
 .db-input {
   border-radius: 0.75rem;
   border: 1px solid var(--db-border);
@@ -162,7 +150,6 @@ body {
   box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.55);
 }
 
-/* Buttons */
 .db-btn-primary {
   border-radius: 999px;
   background-color: #020617;
@@ -204,8 +191,6 @@ body {
   color: var(--db-text);
 }
 
-
-/* Badges & text helper */
 .db-badge {
   border-radius: 999px;
   font-size: 0.7rem;
@@ -220,7 +205,6 @@ body {
   font-size: 0.75rem;
 }
 
-/* Table row hover */
 .db-row-hover:hover {
   background-color: rgba(148, 163, 184, 0.1);
 }
@@ -240,7 +224,6 @@ body {
   animation: db-card-pop 0.28s ease-out;
 }
 
-/* spinner kecil */
 @keyframes db-spin {
   to {
     transform: rotate(360deg);
@@ -256,7 +239,6 @@ body {
   animation: db-spin 0.8s linear infinite;
 }
 
-/* progress bar countdown */
 .db-progress-track {
   position: relative;
   height: 0.3rem;
