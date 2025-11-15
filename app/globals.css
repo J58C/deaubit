@@ -1,0 +1,278 @@
+@import "tailwindcss";
+
+/* === DeauBit theme: color palette & utilities === */
+
+/* Light theme (unchanged / tetap) */
+:root {
+  color-scheme: light;
+
+  --db-bg: #f3f4f6;
+  --db-surface: #ffffff;
+  --db-surface-muted: #f1f5f9;
+  --db-border: #e2e8f0;
+  --db-border-soft: #e5e7eb;
+
+  --db-text: #020617;
+  --db-text-muted: #6b7280;
+
+  --db-accent: #0ea5e9;
+  --db-accent-soft: #e0f2fe;
+
+  --db-danger: #ef4444;
+  --db-danger-soft: #fee2e2;
+}
+
+/* Dark theme – versi baru, lebih “indigo/blue macOS-ish” */
+.dark {
+  color-scheme: dark;
+
+  --db-bg: #020617;              /* background page */
+  --db-surface: #020617;         /* shell utama */
+  --db-surface-muted: #020617;   /* card akan pakai overlay sendiri */
+  --db-border: #1e293b;
+  --db-border-soft: #0f172a;
+
+  --db-text: #e5e7eb;
+  --db-text-muted: #9ca3af;
+
+  --db-accent: #38bdf8;          /* sky-400-ish */
+  --db-accent-soft: #0b1120;
+
+  --db-danger: #fb7185;
+  --db-danger-soft: #45101a;
+}
+
+body {
+  background-color: var(--db-bg);
+  color: var(--db-text);
+}
+
+/* Animasi umum */
+@keyframes db-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.db-animate {
+  animation: db-fade-up 0.28s ease-out;
+}
+
+/* Animasi khusus login (sedikit scale + blur feel) */
+@keyframes db-login-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.db-animate-login {
+  animation: db-login-in 0.32s ease-out;
+}
+
+/* Dot status */
+@keyframes db-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.6;
+  }
+}
+
+.db-status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background-color: #22c55e;
+  animation: db-pulse 1.4s ease-in-out infinite;
+}
+
+/* Shell utama – gaya “macOS-ish” */
+.db-shell {
+  border-radius: 1rem;
+  background-color: var(--db-surface);
+  border: 1px solid var(--db-border);
+  box-shadow:
+    0 22px 60px rgba(15, 23, 42, 0.18),
+    0 0 0 1px rgba(148, 163, 184, 0.06);
+}
+
+/* Card internal */
+.db-card {
+  border-radius: 1rem;
+  background-color: var(--db-surface-muted);
+  border: 1px solid var(--db-border-soft);
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.06);
+}
+
+/* Card di dark mode sedikit translucent */
+.dark .db-card {
+  background: radial-gradient(circle at top left, #0b1120 0, #020617 55%);
+  border-color: rgba(15, 23, 42, 0.9);
+  box-shadow:
+    0 18px 60px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+/* Efek hover sedikit naik (kalau dipakai) */
+.db-card-raise {
+  transition: transform 0.18s ease-out, box-shadow 0.18s ease-out,
+    border-color 0.18s ease-out;
+}
+
+.db-card-raise:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.2),
+    0 0 0 1px rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
+/* Input & fokus */
+.db-input {
+  border-radius: 0.75rem;
+  border: 1px solid var(--db-border);
+  background-color: var(--db-surface);
+  color: var(--db-text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.db-input::placeholder {
+  color: var(--db-text-muted);
+}
+
+.db-input:focus {
+  outline: none;
+  border-color: var(--db-accent);
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.55);
+}
+
+/* Buttons */
+.db-btn-primary {
+  border-radius: 999px;
+  background-color: #020617;
+  color: #f9fafb;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.dark .db-btn-primary {
+  background: linear-gradient(135deg, #38bdf8, #4f46e5);
+  color: #0b1120;
+}
+
+.db-btn-ghost {
+  border-radius: 999px;
+  border: 1px solid var(--db-border);
+  background-color: var(--db-surface);
+  color: var(--db-text);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+}
+
+.db-btn-icon {
+  border-radius: 999px;
+  border: 1px solid var(--db-border);
+  background-color: var(--db-surface);
+  color: var(--db-text-muted);
+  padding: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  font-size: 0.7rem;
+}
+
+.db-btn-icon:hover {
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.4);
+  color: var(--db-text);
+}
+
+
+/* Badges & text helper */
+.db-badge {
+  border-radius: 999px;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--db-border);
+  background-color: var(--db-surface-muted);
+  color: var(--db-text-muted);
+}
+
+.db-muted {
+  color: var(--db-text-muted);
+  font-size: 0.75rem;
+}
+
+/* Table row hover */
+.db-row-hover:hover {
+  background-color: rgba(148, 163, 184, 0.1);
+}
+
+@keyframes db-card-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.db-card-pop {
+  animation: db-card-pop 0.28s ease-out;
+}
+
+/* spinner kecil */
+@keyframes db-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.db-spinner {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 999px;
+  border: 2px solid rgba(148, 163, 184, 0.5);
+  border-top-color: #38bdf8;
+  animation: db-spin 0.8s linear infinite;
+}
+
+/* progress bar countdown */
+.db-progress-track {
+  position: relative;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+}
+
+.dark .db-progress-track {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.db-progress-bar {
+  height: 100%;
+  border-radius: inherit;
+  width: var(--db-progress, 0%);
+  background: linear-gradient(90deg, #38bdf8, #4f46e5);
+  transition: width 0.1s linear;
+}

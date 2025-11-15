@@ -1,0 +1,15 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model ShortLink {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  targetUrl String
+  createdAt DateTime @default(now())
+}
