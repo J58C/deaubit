@@ -1,5 +1,3 @@
-//app/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -39,6 +37,12 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") || "/dash";
+
+  const publicBaseUrl =
+    (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "") ||
+    (typeof window !== "undefined"
+      ? window.location.origin.replace(/\/+$/, "")
+      : "");
 
   useEffect(() => {
     let cancelled = false;
@@ -147,13 +151,7 @@ export default function LoginPage() {
         body: JSON.stringify({ targetUrl: publicTarget }),
       });
 
-      type PublicLinkResponse = {
-        slug?: string;
-        error?: string;
-        [key: string]: unknown;
-      };
-
-      const data = await res.json().catch(() => ({} as PublicLinkResponse));
+      const data = await res.json().catch(() => ({} as any));
 
       if (!res.ok) {
         throw new Error(
@@ -164,11 +162,9 @@ export default function LoginPage() {
       }
 
       const slug: string = data.slug;
-      const base =
-        typeof window !== "undefined"
-          ? window.location.origin.replace(/\/+$/, "")
-          : "";
-      const shortUrl = base ? `${base}/${slug}` : `/${slug}`;
+      const shortUrl = publicBaseUrl
+        ? `${publicBaseUrl}/${slug}`
+        : `/${slug}`;
 
       setPublicResult({ slug, shortUrl });
       setPublicTarget("");
@@ -313,182 +309,182 @@ export default function LoginPage() {
                 <span className="text-xs font-semibold">Admin login</span>
               </div>
 
-              <div className="db-badge inline-flex items-center gap-1">
-                <span className="db-status-dot" />
-                JWT secured
-              </div>
+            <div className="db-badge inline-flex items-center gap-1">
+              <span className="db-status-dot" />
+              JWT secured
             </div>
+          </div>
 
-            <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
-              <form
-                onSubmit={handleSubmit}
-                className="flex-1 flex flex-col gap-3"
-              >
-                <div>
-                  <label className="flex items-center gap-1 text-xs font-medium">
-                    <User2 className="h-3 w-3" />
-                    Username
-                  </label>
+          <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
+            <form
+              onSubmit={handleSubmit}
+              className="flex-1 flex flex-col gap-3"
+            >
+              <div>
+                <label className="flex items-center gap-1 text-xs font-medium">
+                  <User2 className="h-3 w-3" />
+                  Username
+                </label>
+                <input
+                  className="db-input mt-1 w-full"
+                  placeholder="admin"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1 text-xs font-medium">
+                  <KeyRound className="h-3 w-3" />
+                  Password
+                </label>
+                <div className="relative">
                   <input
-                    className="db-input mt-1 w-full"
-                    placeholder="admin"
-                    autoComplete="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type={showPassword ? "text" : "password"}
+                    className="db-input mt-1 w-full pr-9"
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                </div>
-
-                <div>
-                  <label className="flex items-center gap-1 text-xs font-medium">
-                    <KeyRound className="h-3 w-3" />
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      className="db-input mt-1 w-full pr-9"
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-(--db-muted) hover:text-(--db-text) transition-colors"
-                      aria-label={
-                        showPassword
-                          ? "Sembunyikan password"
-                          : "Tampilkan password"
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-3.5 w-3.5" />
-                      ) : (
-                        <Eye className="h-3.5 w-3.5" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="min-h-[2.3rem] mt-1">
-                  {error && (
-                    <p
-                      className="text-[0.7rem] rounded-lg border px-3 py-2"
-                      style={{
-                        borderColor: "rgba(248, 113, 113, 0.5)",
-                        backgroundColor: "var(--db-danger-soft)",
-                      }}
-                    >
-                      {error}
-                    </p>
-                  )}
-                </div>
-
-                <div className="pt-1 flex justify-center">
                   <button
-                    type="submit"
-                    disabled={loading || (cooldown !== null && cooldown > 0)}
-                    className={`db-btn-primary inline-flex items-center justify-center gap-2 rounded-full
-                      w-full md:w-auto px-6
-                      transition-all duration-200 transform
-                      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--db-accent)
-                      focus-visible:ring-offset-2 focus-visible:ring-offset-(--db-bg)
-                      ${
-                        loading || (cooldown !== null && cooldown > 0)
-                          ? "cursor-not-allowed opacity-80"
-                          : "hover:-translate-y-px hover:shadow-[0_0_22px_rgba(59,130,246,0.45)] active:translate-y-px active:scale-[0.97]"
-                      }`}
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-(--db-muted) hover:text-(--db-text) transition-colors"
+                    aria-label={
+                      showPassword
+                        ? "Sembunyikan password"
+                        : "Tampilkan password"
+                    }
                   >
-                    {loading && (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {showPassword ? (
+                      <EyeOff className="h-3.5 w-3.5" />
+                    ) : (
+                      <Eye className="h-3.5 w-3.5" />
                     )}
-                    <span>
-                      {loading
-                        ? "Memeriksa kredensial…"
-                        : cooldown !== null && cooldown > 0
-                        ? `Tunggu ${cooldown} detik`
-                        : "Masuk ke dashboard"}
-                    </span>
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {publicResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setPublicResult(null)}
-          />
-          <div className="relative w-full max-w-md db-card db-card-pop p-5 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex flex-col">
-                <span className="text-xs font-semibold">
-                  Shortlink berhasil dibuat
-                </span>
-                <span className="db-muted text-[0.7rem]">
-                  Salin atau buka link di tab baru.
-                </span>
               </div>
-              <button
-                type="button"
-                className="db-btn-icon"
-                onClick={() => setPublicResult(null)}
-                aria-label="Tutup"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
 
-            <div className="rounded-lg border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-2 text-left">
-              <p className="font-mono text-[0.7rem] break-all">
-                {publicResult.shortUrl}
-              </p>
-            </div>
+              <div className="min-h-[2.3rem] mt-1">
+                {error && (
+                  <p
+                    className="text-[0.7rem] rounded-lg border px-3 py-2"
+                    style={{
+                      borderColor: "rgba(248, 113, 113, 0.5)",
+                      backgroundColor: "var(--db-danger-soft)",
+                    }}
+                  >
+                    {error}
+                  </p>
+                )}
+              </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                className="db-btn-ghost inline-flex items-center gap-1 text-[0.7rem]"
-                onClick={copyPublicShortUrl}
-              >
-                <Copy className="h-3 w-3" />
-                Copy
-              </button>
-              <a
-                href={publicResult.shortUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="db-btn-primary inline-flex items-center gap-1 text-[0.7rem]"
-              >
-                Buka link
-              </a>
-            </div>
+              <div className="pt-1 flex justify-center">
+                <button
+                  type="submit"
+                  disabled={loading || (cooldown !== null && cooldown > 0)}
+                  className={`db-btn-primary inline-flex items-center justify-center gap-2 rounded-full
+                    w-full md:w-auto px-6
+                    transition-all duration-200 transform
+                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--db-accent)
+                    focus-visible:ring-offset-2 focus-visible:ring-offset-(--db-bg)
+                    ${
+                      loading || (cooldown !== null && cooldown > 0)
+                        ? "cursor-not-allowed opacity-80"
+                        : "hover:-translate-y-px hover:shadow-[0_0_22px_rgba(59,130,246,0.45)] active:translate-y-px active:scale-[0.97]"
+                    }`}
+                >
+                  {loading && (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  )}
+                  <span>
+                    {loading
+                      ? "Memeriksa kredensial…"
+                      : cooldown !== null && cooldown > 0
+                      ? `Tunggu ${cooldown} detik`
+                      : "Masuk ke dashboard"}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      )}
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[0.7rem]">
-        <span className="inline-flex items-center gap-1 rounded-full border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-1">
-          <Link2 className="h-3 w-3" />
-          <span className="font-medium">DeauBit</span>
-        </span>
-        <span className="db-muted">
-          Powered by{" "}
-          <span
-            className="font-semibold"
-            style={{ color: "var(--db-accent)" }}
-          >
-            deauport
-          </span>
-        </span>
-      </div>
+      </section>
     </div>
+
+    {publicResult && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setPublicResult(null)}
+        />
+        <div className="relative w-full max-w-md db-card db-card-pop p-5 space-y-4">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold">
+                Shortlink berhasil dibuat
+              </span>
+              <span className="db-muted text-[0.7rem]">
+                Salin atau buka link di tab baru.
+              </span>
+            </div>
+            <button
+              type="button"
+              className="db-btn-icon"
+              onClick={() => setPublicResult(null)}
+              aria-label="Tutup"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-2 text-left">
+            <p className="font-mono text-[0.7rem] break-all">
+              {publicResult.shortUrl}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              className="db-btn-ghost inline-flex items-center gap-1 text-[0.7rem]"
+              onClick={copyPublicShortUrl}
+            >
+              <Copy className="h-3 w-3" />
+              Copy
+            </button>
+            <a
+              href={publicResult.shortUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="db-btn-primary inline-flex items-center gap-1 text-[0.7rem]"
+            >
+              Buka link
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-[0.7rem]">
+      <span className="inline-flex items-center gap-1 rounded-full border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-1">
+        <Link2 className="h-3 w-3" />
+        <span className="font-medium">DeauBit</span>
+      </span>
+      <span className="db-muted">
+        Powered by{" "}
+        <span
+          className="font-semibold"
+          style={{ color: "var(--db-accent)" }}
+        >
+          deauport
+        </span>
+      </span>
+    </div>
+  </div>
   );
 }
