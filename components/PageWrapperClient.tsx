@@ -4,6 +4,7 @@
 
 import { usePathname } from "next/navigation";
 import AppShell from "./AppShell";
+import ThemeToggle from "./ThemeToggle";
 
 export default function PageWrapperClient({
   children,
@@ -31,15 +32,21 @@ export default function PageWrapperClient({
 
   if (isLogin) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-6">
-        {children}
-      </div>
+      <>
+        <ThemeToggle />
+        <div className="min-h-screen flex items-center justify-center px-4 py-6">
+          {children}
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex px-4 items-center md:items-start justify-center py-6 md:py-8">
-      <AppShell>{children}</AppShell>
-    </div>
+    <>
+      <ThemeToggle />
+      <div className="min-h-screen flex px-4 items-center md:items-start justify-center py-6 md:py-8">
+        <AppShell>{children}</AppShell>
+      </div>
+    </>
   );
 }
