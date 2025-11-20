@@ -1,11 +1,7 @@
+//proxy.ts
+
 import { NextRequest, NextResponse } from "next/server";
-
-const SESSION_COOKIE_NAME = "admin_session";
-
-const SLUG_BASE_URL = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(
-  /\/+$/,
-  ""
-);
+import { SESSION_COOKIE_NAME, RESERVED_SLUGS, SLUG_BASE_URL } from "@/constants";
 
 let SLUG_HOST: string | null = null;
 if (SLUG_BASE_URL) {
@@ -15,19 +11,6 @@ if (SLUG_BASE_URL) {
     SLUG_HOST = null;
   }
 }
-
-const RESERVED_SLUGS = new Set([
-  "",
-  "login",
-  "dash",
-  "api",
-  "favicon.ico",
-  "robots.txt",
-  "sitemap.xml",
-  "_next",
-  "static",
-  "images",
-]);
 
 function isShortlinkPath(pathname: string): boolean {
   const segments = pathname.split("/").filter(Boolean);
@@ -40,16 +23,19 @@ function isShortlinkPath(pathname: string): boolean {
 }
 
 function isPublicPath(pathname: string): boolean {
-  if (
-    pathname === "/" ||
-    pathname === "/login" || // legacy
-    pathname === "/api/login" ||
-    pathname === "/api/logout" ||
-    pathname === "/api/public-links" ||
-    pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml"
-  ) {
+  const publicPaths = [
+    "/",
+    "/login",
+    "/api/login",
+    "/api/logout",
+    "/api/public-links",
+    "/api/session",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap.xml",
+  ];
+
+  if (publicPaths.includes(pathname)) {
     return true;
   }
 
@@ -65,7 +51,7 @@ function isAuthenticated(req: NextRequest): boolean {
   return !!cookie?.value;
 }
 
-export default function proxy(req: NextRequest) {
+export default function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
 
   const hostHeader = req.headers.get("host") || "";

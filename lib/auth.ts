@@ -1,4 +1,4 @@
-// lib/auth.ts
+//lib/auth.ts
 
 import jwt, { JwtPayload, Secret } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
@@ -18,7 +18,7 @@ if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
   );
 }
 
-export const SESSION_MAX_AGE = 60 * 60 * 24; // 24 jam (detik)
+export const SESSION_MAX_AGE = 60 * 60 * 24;
 export const SESSION_COOKIE_NAME = "admin_session";
 
 export interface AdminJwtPayload extends JwtPayload {
