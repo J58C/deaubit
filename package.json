@@ -1,14 +1,16 @@
 {
-  "name": "deauport-shortlink",
+  "name": "deaubit",
   "version": "0.3.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.2",
@@ -19,7 +21,6 @@
     "react-dom": "19.2.0"
   },
   "devDependencies": {
-    "@prisma/client": "^6.19.0",
     "@tailwindcss/postcss": "^4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
