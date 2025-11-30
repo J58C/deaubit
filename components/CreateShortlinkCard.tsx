@@ -50,7 +50,7 @@ export function CreateShortlinkCard({
             <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
             <input
               className="db-input pl-9"
-              placeholder="https://example.com/very-long-url"
+              placeholder="https://example.com"
               value={targetUrl}
               onChange={(e) => onChangeTarget(e.target.value)}
               required
@@ -65,7 +65,7 @@ export function CreateShortlinkCard({
             <Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
             <input
               className="db-input pl-9 font-mono text-sm"
-              placeholder="my-custom-link"
+              placeholder="Custom link"
               value={slug}
               onChange={(e) => onChangeSlug(e.target.value)}
               disabled={loading}

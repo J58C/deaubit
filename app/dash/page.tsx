@@ -168,76 +168,44 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="w-full max-w-5xl mx-auto space-y-5">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-(--db-border-soft) pb-4">
-          <div className="flex items-center gap-3">
-            <DeauBitLogo size={38} />
+      <div className="w-full max-w-6xl mx-auto space-y-4 md:space-y-6 pb-10 px-2 md:px-4">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--db-border-soft)] pb-4 mt-2">
+          <div className="flex items-center gap-2 md:gap-3">
+            <DeauBitLogo size={36} />
             <div className="flex flex-col">
-              <span className="text-sm font-semibold tracking-tight">
+              <span className="text-base md:text-lg font-bold tracking-tight text-[var(--db-text)]">
                 DeauBit
               </span>
-              <span className="db-muted">
-                Self-hosted shortlink manager
+              <span className="text-[10px] md:text-xs db-muted">
+                URL Shortener
               </span>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="db-badge hidden sm:inline-flex items-center gap-1">
-              <span className="db-status-dot" />
-              Admin session · JWT
-            </div>
+             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--db-surface-muted)] border border-[var(--db-border)]">
+                <span className="db-status-dot" />
+                <span className="text-[10px] font-medium text-[var(--db-text-muted)]">Operational</span>
+             </div>
             <button
               onClick={handleLogout}
-              className="db-btn-ghost inline-flex items-center gap-1"
+              className="db-btn-ghost inline-flex items-center gap-1.5 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-xs md:text-sm"
             >
               <LogOut className="h-3.5 w-3.5" />
-              Logout
+              <span className="font-medium">Logout</span>
             </button>
           </div>
         </header>
 
-        <section className="flex flex-wrap items-center justify-between gap-4 border-b border-(--db-border-soft) pb-4">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-(--db-accent-soft) text-(--db-accent)">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-4 w-4"
-                aria-hidden="true"
-              >
-                <path
-                  d="M8.5 6.75A3.25 3.25 0 0 1 11.75 3.5h1.5A3.75 3.75 0 0 1 17 7.25v.5a3.25 3.25 0 0 1-3.25 3.25h-1.25"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M15.5 17.25A3.25 3.25 0 0 1 12.25 20.5h-1.5A3.75 3.75 0 0 1 7 16.75v-.5A3.25 3.25 0 0 1 10.25 13h1.25"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium">Shortlinks overview</p>
-              <p className="db-muted">
-                Buat, kelola, dan salin shortlink dari satu dashboard.
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="db-muted">Total links</p>
-            <p className="text-lg font-semibold">{links.length}</p>
-          </div>
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+           <div className="p-3 md:p-4 rounded-xl bg-[var(--db-surface)] border border-[var(--db-border-soft)] shadow-sm">
+              <p className="text-[10px] md:text-xs db-muted mb-1">Total Active Links</p>
+              <p className="text-xl md:text-2xl font-bold font-mono">{links.length}</p>
+           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-6 md:grid-cols-12">
-          <div className="md:col-span-8">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-8 h-full order-2 lg:order-1">
             <ExistingShortlinksCard
               links={links}
               loadingTable={loadingTable}
@@ -251,7 +219,7 @@ export default function DashboardPage() {
             />
           </div>
 
-          <div className="md:col-span-4">
+          <div className="lg:col-span-4 h-full sticky top-4 order-1 lg:order-2">
             <CreateShortlinkCard
               targetUrl={targetUrl}
               slug={slug}
@@ -285,133 +253,57 @@ export default function DashboardPage() {
       )}
 
       {selectedLink && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-40 flex items-center justify-center px-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setSelectedLink(null)}
           />
-          <div className="relative w-full max-w-lg db-card db-card-pop p-5 space-y-4">
-            <div className="flex items-center justify-between mb-1">
+          <div className="relative w-full max-w-lg db-card db-card-pop p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-xs font-semibold">
-                  Full target URL
+                <span className="text-sm font-bold flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-[var(--db-accent)]"/> Full Target URL
                 </span>
-                <span className="db-muted text-[0.7rem]">
-                  {selectedLink.slug} · dibuat{" "}
-                  {new Date(selectedLink.createdAt).toLocaleString()}
-                </span>
+                <span className="db-muted text-[10px] mt-0.5">/{selectedLink.slug}</span>
               </div>
-              <button
-                type="button"
-                className="db-btn-icon"
-                onClick={() => setSelectedLink(null)}
-              >
-                <X className="h-3.5 w-3.5" />
+              <button className="db-btn-icon" onClick={() => setSelectedLink(null)}>
+                <X className="h-4 w-4" />
               </button>
             </div>
-
-            <div className="rounded-lg border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-2 text-left">
-              <p className="font-mono text-[0.7rem] break-all">
-                {selectedLink.targetUrl}
-              </p>
+            <div className="p-3 rounded-lg bg-[var(--db-surface-muted)] border border-[var(--db-border)] break-all font-mono text-xs">
+              {selectedLink.targetUrl}
             </div>
-
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                className="db-btn-ghost inline-flex items-center gap-1 text-[0.7rem]"
-                onClick={() => copyToClipboard(selectedLink.targetUrl)}
-              >
-                Copy target URL
-              </button>
-              <a
-                href={selectedLink.targetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="db-btn-primary inline-flex items-center gap-1 text-[0.7rem]"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Buka di tab baru
-              </a>
+            <div className="flex justify-end gap-2">
+              <button className="db-btn-ghost text-xs" onClick={() => copyToClipboard(selectedLink.targetUrl)}>Copy URL</button>
+              <a href={selectedLink.targetUrl} target="_blank" rel="noreferrer" className="db-btn-primary text-xs">Open Link</a>
             </div>
           </div>
         </div>
       )}
 
       {pendingDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={cancelDelete}
           />
-          <div className="relative w-full max-w-md db-card db-card-pop p-5 space-y-4">
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-(--db-danger-soft) text-(--db-danger)">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-xs font-semibold">
-                    Hapus shortlink?
-                  </span>
-                  <span className="db-muted text-[0.7rem]">
-                    Tindakan ini tidak bisa dibatalkan.
-                  </span>
-                </div>
+          <div className="relative w-full max-w-sm db-card db-card-pop p-6 space-y-4 shadow-2xl border-red-100 dark:border-red-900/30">
+            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full">
+                 <Trash2 className="h-5 w-5" />
               </div>
-              <button
-                type="button"
-                className="db-btn-icon"
-                onClick={cancelDelete}
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+              <h3 className="text-lg font-bold">Delete Link?</h3>
             </div>
-
-            <div className="rounded-lg border border-(--db-border-soft) bg-(--db-surface-muted) px-3 py-2 text-left text-[0.7rem] space-y-1">
-              <div>
-                <span className="db-muted">Slug: </span>
-                <span className="font-mono">{pendingDelete.slug}</span>
-              </div>
-              <div className="truncate">
-                <span className="db-muted">Target: </span>
-                <span className="font-mono break-all">
-                  {pendingDelete.targetUrl}
-                </span>
-              </div>
-            </div>
-
+            <p className="text-sm db-muted">
+              Are you sure you want to delete <span className="font-mono font-bold text-[var(--db-text)]">/{pendingDelete.slug}</span>? This action cannot be undone.
+            </p>
             {deleteError && (
-              <p
-                className="text-[0.7rem] rounded-lg border px-3 py-2"
-                style={{
-                  borderColor: "rgba(248, 113, 113, 0.5)",
-                  backgroundColor: "var(--db-danger-soft)",
-                }}
-              >
-                {deleteError}
-              </p>
+              <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">{deleteError}</p>
             )}
-
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-              <button
-                type="button"
-                className="db-btn-ghost inline-flex items-center gap-1 text-[0.7rem]"
-                onClick={cancelDelete}
-                disabled={deleteLoading}
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                disabled={deleteLoading}
-                className="db-btn-danger inline-flex items-center gap-1 text-[0.7rem]"
-              >
-                {deleteLoading && (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                )}
-                Hapus
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button onClick={cancelDelete} disabled={deleteLoading} className="db-btn-ghost text-xs">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleteLoading} className="db-btn-primary bg-red-600 hover:bg-red-700 text-white border-transparent text-xs">
+                {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Delete Forever"}
               </button>
             </div>
           </div>
