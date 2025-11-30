@@ -1,6 +1,6 @@
 //components/ExistingShortlinksCard.tsx
 
-import { Eye, Copy, Trash2, Link2 } from "lucide-react";
+import { Eye, Copy, Trash2, Link2, QrCode, BarChart3 } from "lucide-react";
 
 export interface ShortLink {
   id: string;
@@ -17,6 +17,7 @@ interface ExistingShortlinksCardProps {
   onCopy: (url: string) => void;
   onDelete: (slug: string) => void;
   onViewTarget: (link: ShortLink) => void;
+  onViewStats: (slug: string) => void; // <--- Prop Baru
 }
 
 export function ExistingShortlinksCard({
@@ -27,7 +28,18 @@ export function ExistingShortlinksCard({
   onCopy,
   onDelete,
   onViewTarget,
+  onViewStats,
 }: ExistingShortlinksCardProps) {
+  
+  const handleOpenQr = (shortUrl: string) => {
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(shortUrl)}`;
+    window.open(
+      qrApiUrl, 
+      'QRCodeWindow', 
+      'width=350,height=350,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no'
+    );
+  };
+
   return (
     <div className="db-card h-full flex flex-col overflow-hidden text-xs">
       <div className="flex items-center justify-between border-b border-(--db-border-soft) px-3 py-2.5">
@@ -108,6 +120,32 @@ export function ExistingShortlinksCard({
 
                     <td className="px-3 py-2 align-top text-right whitespace-nowrap">
                       <button
+                        onClick={() => onViewStats(link.slug)}
+                        className="db-btn-ghost inline-flex items-center gap-1 mr-1"
+                        style={{
+                          fontSize: "0.7rem",
+                          paddingInline: "0.5rem",
+                        }}
+                        title="Lihat Statistik"
+                      >
+                        <BarChart3 className="h-3 w-3" />
+                        <span className="hidden sm:inline">Stats</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenQr(shortUrl)}
+                        className="db-btn-ghost inline-flex items-center gap-1 mr-1"
+                        style={{
+                          fontSize: "0.7rem",
+                          paddingInline: "0.5rem",
+                        }}
+                        title="Tampilkan QR Code"
+                      >
+                        <QrCode className="h-3 w-3" />
+                        <span className="hidden sm:inline">QR</span>
+                      </button>
+
+                      <button
                         onClick={() => onCopy(shortUrl)}
                         className="db-btn-ghost inline-flex items-center gap-1 mr-1"
                         style={{
@@ -118,6 +156,7 @@ export function ExistingShortlinksCard({
                         <Copy className="h-3 w-3" />
                         Copy
                       </button>
+
                       <button
                         onClick={() => onDelete(link.slug)}
                         className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[0.7rem]"

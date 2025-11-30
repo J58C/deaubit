@@ -7,8 +7,29 @@ generator client {
 }
 
 model ShortLink {
-  id        String   @id @default(cuid())
-  slug      String   @unique
+  id        String    @id @default(cuid())
+  slug      String    @unique
   targetUrl String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  
+  password  String?
+  expiresAt DateTime?
+
+  clicks    Click[]
+}
+
+model Click {
+  id          String   @id @default(cuid())
+  shortLinkId String
+  browser     String?
+  os          String?
+  device      String?
+  country     String?
+  city        String?
+  ip          String?
+  clickedAt   DateTime @default(now())
+
+  shortLink   ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+  
+  @@index([shortLinkId])
 }

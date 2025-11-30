@@ -16,6 +16,7 @@ import {
   ShortLink,
 } from "@/components/ExistingShortlinksCard";
 import { CreateShortlinkCard } from "@/components/CreateShortlinkCard";
+import AnalyticsModal from "@/components/AnalyticsModal";
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
@@ -24,7 +25,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [selectedLink, setSelectedLink] = useState<ShortLink | null>(null);
+  const [analyticsSlug, setAnalyticsSlug] = useState<string | null>(null);
 
   const [pendingDelete, setPendingDelete] = useState<ShortLink | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -48,7 +51,10 @@ export default function DashboardPage() {
     fetchLinks().catch(console.error);
   }, []);
 
-  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+  async function handleCreate(
+    e: React.FormEvent<HTMLFormElement>,
+    extras: { password?: string; expiresAt?: string }
+  ) {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -59,6 +65,8 @@ export default function DashboardPage() {
         body: JSON.stringify({
           targetUrl,
           slug: slug || undefined,
+          password: extras.password,
+          expiresAt: extras.expiresAt,
         }),
       });
 
@@ -67,6 +75,7 @@ export default function DashboardPage() {
 
       setTargetUrl("");
       setSlug("");
+      
       await fetchLinks();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -232,6 +241,7 @@ export default function DashboardPage() {
               onCopy={copyToClipboard}
               onDelete={requestDelete}
               onViewTarget={(link) => setSelectedLink(link)}
+              onViewStats={(slug) => setAnalyticsSlug(slug)}
             />
           </div>
 
@@ -248,6 +258,13 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {analyticsSlug && (
+        <AnalyticsModal 
+          slug={analyticsSlug} 
+          onClose={() => setAnalyticsSlug(null)} 
+        />
+      )}
 
       {selectedLink && (
         <div className="fixed inset-0 z-40 flex items-center justify-center px-4">
