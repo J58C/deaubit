@@ -20,8 +20,13 @@ import AnalyticsModal from "@/components/AnalyticsModal";
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
+  
+  // --- STATE FORM (Diangkat ke sini agar bisa reset) ---
   const [targetUrl, setTargetUrl] = useState("");
   const [slug, setSlug] = useState("");
+  const [password, setPassword] = useState(""); // State baru
+  const [expiresAt, setExpiresAt] = useState(""); // State baru
+
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,30 +56,31 @@ export default function DashboardPage() {
     fetchLinks().catch(console.error);
   }, []);
 
-  async function handleCreate(
-    e: React.FormEvent<HTMLFormElement>,
-    extras: { password?: string; expiresAt?: string }
-  ) {
+  async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
+      // Mengirim payload lengkap
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           targetUrl,
           slug: slug || undefined,
-          password: extras.password,
-          expiresAt: extras.expiresAt,
+          password: password || undefined,
+          expiresAt: expiresAt || undefined,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create");
 
+      // --- RESET SEMUA FIELD ---
       setTargetUrl("");
       setSlug("");
+      setPassword(""); 
+      setExpiresAt("");
       
       await fetchLinks();
     } catch (e) {
@@ -246,14 +252,19 @@ export default function DashboardPage() {
           </div>
 
           <div className="md:col-span-4">
+            {/* PROPS LENGKAP DIPASSING KE SINI */}
             <CreateShortlinkCard
               targetUrl={targetUrl}
               slug={slug}
+              password={password}
+              expiresAt={expiresAt}
               loading={loading}
               error={error}
               onSubmit={handleCreate}
               onChangeTarget={setTargetUrl}
               onChangeSlug={setSlug}
+              onChangePassword={setPassword}
+              onChangeExpiresAt={setExpiresAt}
             />
           </div>
         </section>
