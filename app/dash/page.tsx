@@ -17,15 +17,15 @@ import {
 } from "@/components/ExistingShortlinksCard";
 import { CreateShortlinkCard } from "@/components/CreateShortlinkCard";
 import AnalyticsModal from "@/components/AnalyticsModal";
+import QrCodeModal from "@/components/QrCodeModal"; 
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
   
-  // --- STATE FORM (Diangkat ke sini agar bisa reset) ---
   const [targetUrl, setTargetUrl] = useState("");
   const [slug, setSlug] = useState("");
-  const [password, setPassword] = useState(""); // State baru
-  const [expiresAt, setExpiresAt] = useState(""); // State baru
+  const [password, setPassword] = useState(""); 
+  const [expiresAt, setExpiresAt] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
@@ -33,6 +33,7 @@ export default function DashboardPage() {
   
   const [selectedLink, setSelectedLink] = useState<ShortLink | null>(null);
   const [analyticsSlug, setAnalyticsSlug] = useState<string | null>(null);
+  const [qrSlug, setQrSlug] = useState<string | null>(null); 
 
   const [pendingDelete, setPendingDelete] = useState<ShortLink | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -61,7 +62,6 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      // Mengirim payload lengkap
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,7 +76,6 @@ export default function DashboardPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to create");
 
-      // --- RESET SEMUA FIELD ---
       setTargetUrl("");
       setSlug("");
       setPassword(""); 
@@ -248,11 +247,11 @@ export default function DashboardPage() {
               onDelete={requestDelete}
               onViewTarget={(link) => setSelectedLink(link)}
               onViewStats={(slug) => setAnalyticsSlug(slug)}
+              onViewQr={(slug) => setQrSlug(slug)}
             />
           </div>
 
           <div className="md:col-span-4">
-            {/* PROPS LENGKAP DIPASSING KE SINI */}
             <CreateShortlinkCard
               targetUrl={targetUrl}
               slug={slug}
@@ -274,6 +273,14 @@ export default function DashboardPage() {
         <AnalyticsModal 
           slug={analyticsSlug} 
           onClose={() => setAnalyticsSlug(null)} 
+        />
+      )}
+
+      {qrSlug && (
+        <QrCodeModal
+          slug={qrSlug}
+          shortUrl={`${baseUrl}/${qrSlug}`}
+          onClose={() => setQrSlug(null)}
         />
       )}
 

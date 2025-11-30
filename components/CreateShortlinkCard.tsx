@@ -5,15 +5,15 @@ import { Calendar, Lock, Link2, Type, ArrowRight, Loader2 } from "lucide-react";
 interface CreateShortlinkCardProps {
   targetUrl: string;
   slug: string;
-  password: string;    // Terima dari parent
-  expiresAt: string;   // Terima dari parent
+  password: string;
+  expiresAt: string;
   loading: boolean;
   error: string | null;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   onChangeTarget: (value: string) => void;
   onChangeSlug: (value: string) => void;
-  onChangePassword: (value: string) => void;   // Handler dari parent
-  onChangeExpiresAt: (value: string) => void;  // Handler dari parent
+  onChangePassword: (value: string) => void;
+  onChangeExpiresAt: (value: string) => void;
 }
 
 export function CreateShortlinkCard({
@@ -44,7 +44,6 @@ export function CreateShortlinkCard({
 
       <form className="space-y-4 flex-1 flex flex-col" onSubmit={onSubmit}>
         
-        {/* Target URL */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold ml-1">Destination URL</label>
           <div className="relative group">
@@ -60,7 +59,6 @@ export function CreateShortlinkCard({
           </div>
         </div>
 
-        {/* Custom Slug */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold ml-1">Custom Slug <span className="font-normal text-[var(--db-text-muted)]">(Optional)</span></label>
           <div className="relative group">
@@ -78,13 +76,10 @@ export function CreateShortlinkCard({
         <div className="border-t border-[var(--db-border-soft)] my-2 opacity-50" />
         <p className="text-[10px] font-semibold uppercase tracking-wider db-muted ml-1">Advanced Options</p>
 
-        {/* Password Protection - FIXED ICON POSITION */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold ml-1">Password Protection</label>
           <div className="relative group">
-            {/* Ikon Posisi Absolute */}
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
-            {/* Input dengan padding kiri (pl-9) */}
             <input
               type="text"
               className="db-input pl-9"
@@ -96,13 +91,10 @@ export function CreateShortlinkCard({
           </div>
         </div>
 
-        {/* Expiration Date - FIXED ICON POSITION */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold ml-1">Expiration Date</label>
           <div className="relative group">
-            {/* Ikon Posisi Absolute */}
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
-            {/* Input dengan padding kiri (pl-9) */}
             <input
               type="datetime-local"
               className="db-input pl-9" 

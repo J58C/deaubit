@@ -1,12 +1,13 @@
 //components/ExistingShortlinksCard.tsx
 
-import { Eye, Copy, Trash2, Link2, QrCode, BarChart3, ExternalLink } from "lucide-react";
+import { Copy, Trash2, Link2, QrCode, BarChart3, ExternalLink, Clock } from "lucide-react";
 
 export interface ShortLink {
   id: string;
   slug: string;
   targetUrl: string;
   createdAt: string;
+  expiresAt?: string | null;
 }
 
 interface ExistingShortlinksCardProps {
@@ -18,6 +19,7 @@ interface ExistingShortlinksCardProps {
   onDelete: (slug: string) => void;
   onViewTarget: (link: ShortLink) => void;
   onViewStats: (slug: string) => void;
+  onViewQr: (slug: string) => void;
 }
 
 export function ExistingShortlinksCard({
@@ -29,15 +31,15 @@ export function ExistingShortlinksCard({
   onDelete,
   onViewTarget,
   onViewStats,
+  onViewQr,
 }: ExistingShortlinksCardProps) {
-
-  const handleOpenQr = (shortUrl: string) => {
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&data=${encodeURIComponent(shortUrl)}`;
-    window.open(qrApiUrl, 'QRCodeWindow', 'width=350,height=350,scrollbars=no');
-  };
 
   const getDomainInitials = (domain: string) => {
     return domain.substring(0, 1).toUpperCase();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
   return (
@@ -55,7 +57,6 @@ export function ExistingShortlinksCard({
         </div>
       </div>
 
-      {/* FIXED HEIGHT CONTAINER for SCROLLING */}
       <div className="h-[500px] overflow-y-auto p-2">
         {links.length === 0 && !loadingTable ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-60">
@@ -71,9 +72,11 @@ export function ExistingShortlinksCard({
               const shortUrl = `${baseUrl}/${link.slug}`;
               const domainLabel = getDomainLabel(link.targetUrl);
               const initial = getDomainInitials(domainLabel);
+              
+              const isExpired = link.expiresAt && new Date(link.expiresAt) < new Date();
 
               return (
-                <div key={link.id} className="group relative p-3 rounded-xl border border-[var(--db-border-soft)] bg-[var(--db-surface)] hover:border-[var(--db-accent)] hover:shadow-lg hover:shadow-[var(--db-accent-glow)] transition-all duration-200">
+                <div key={link.id} className={`group relative p-3 rounded-xl border border-[var(--db-border-soft)] bg-[var(--db-surface)] hover:border-[var(--db-accent)] hover:shadow-lg hover:shadow-[var(--db-accent-glow)] transition-all duration-200 ${isExpired ? 'opacity-60 grayscale' : ''}`}>
                   <div className="flex items-start justify-between gap-3">
                     
                     <div className="flex items-start gap-3 overflow-hidden">
@@ -84,10 +87,25 @@ export function ExistingShortlinksCard({
                           <a href={shortUrl} target="_blank" className="font-bold text-sm text-[var(--db-accent)] hover:underline truncate flex items-center gap-1">
                              /{link.slug} <ExternalLink className="h-3 w-3 opacity-50" />
                           </a>
-                          <div className="flex items-center gap-1.5 text-xs text-[var(--db-text-muted)] mt-0.5">
-                            <span className="truncate max-w-[180px]">{domainLabel}</span>
+                          
+                          <div className="flex items-center flex-wrap gap-1.5 text-xs text-[var(--db-text-muted)] mt-0.5">
+                            <span className="truncate max-w-[120px]">{domainLabel}</span>
                             <span className="w-1 h-1 rounded-full bg-current opacity-50" />
-                            <span className="opacity-70">{new Date(link.createdAt).toLocaleDateString()}</span>
+                            <span className="opacity-70">{formatDate(link.createdAt)}</span>
+
+                            {link.expiresAt && (
+                              <>
+                                <span className="w-1 h-1 rounded-full bg-current opacity-50" />
+                                <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                                  isExpired 
+                                    ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800' 
+                                    : 'bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/20 dark:border-orange-800'
+                                }`}>
+                                  <Clock className="h-3 w-3" />
+                                  <span>{isExpired ? 'Expired' : formatDate(link.expiresAt)}</span>
+                                </div>
+                              </>
+                            )}
                           </div>
                        </div>
                     </div>
@@ -96,7 +114,7 @@ export function ExistingShortlinksCard({
                       <button onClick={() => onViewStats(link.slug)} className="p-2 rounded-lg hover:bg-[var(--db-surface-muted)] text-[var(--db-text-muted)] hover:text-[var(--db-accent)] transition-colors" title="Analytics">
                          <BarChart3 className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleOpenQr(shortUrl)} className="p-2 rounded-lg hover:bg-[var(--db-surface-muted)] text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors" title="QR Code">
+                      <button onClick={() => onViewQr(link.slug)} className="p-2 rounded-lg hover:bg-[var(--db-surface-muted)] text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors" title="QR Code">
                          <QrCode className="h-4 w-4" />
                       </button>
                       <button onClick={() => onCopy(shortUrl)} className="p-2 rounded-lg hover:bg-[var(--db-surface-muted)] text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors" title="Copy Link">

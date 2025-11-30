@@ -33,6 +33,7 @@ function isPublicPath(pathname: string): boolean {
     "/favicon.ico",
     "/robots.txt",
     "/sitemap.xml",
+    "/api/cron/cleanup",
   ];
 
   if (publicPaths.includes(pathname)) {
