@@ -1,9 +1,27 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String      @unique
+  password      String
+  createdAt     DateTime    @default(now())
+  
+  links         ShortLink[]
+  
+  verifiedAt    DateTime?
+  otpSecret     String?
+
+  resetToken       String?
+  resetTokenExpiry DateTime?
 }
 
 model ShortLink {
@@ -14,6 +32,9 @@ model ShortLink {
   
   password  String?
   expiresAt DateTime?
+
+  userId    String?
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   clicks    Click[]
 }

@@ -1,62 +1,50 @@
-//proxy.ts
+// proxy.ts
 
 import { NextRequest, NextResponse } from "next/server";
-import { SESSION_COOKIE_NAME, RESERVED_SLUGS, SLUG_BASE_URL } from "@/constants";
+import { SESSION_COOKIE_NAME, RESERVED_SLUGS } from "@/constants";
 
-let SLUG_HOST: string | null = null;
-if (SLUG_BASE_URL) {
-  try {
-    SLUG_HOST = new URL(SLUG_BASE_URL).hostname;
-  } catch {
-    SLUG_HOST = null;
-  }
-}
-
-function isShortlinkPath(pathname: string): boolean {
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length !== 1) return false;
-
-  const slug = segments[0];
-  if (RESERVED_SLUGS.has(slug)) return false;
-
-  return true;
-}
-
-function isPublicPath(pathname: string): boolean {
-  const publicPaths = [
-    "/",
-    "/login",
-    "/api/login",
-    "/api/logout",
-    "/api/public-links",
-    "/api/session",
-    "/favicon.ico",
-    "/robots.txt",
-    "/sitemap.xml",
-    "/api/cron/cleanup",
-  ];
-
-  if (publicPaths.includes(pathname)) {
-    return true;
-  }
-
-  if (pathname.startsWith("/_next")) return true;
-  if (pathname.startsWith("/static")) return true;
-  if (pathname.startsWith("/images")) return true;
-
-  return false;
-}
+const APP_HOST = process.env.NEXT_PUBLIC_APP_HOST || "localhost:3000";
+const SHORT_HOST = process.env.NEXT_PUBLIC_SHORT_HOST || "localhost:3000";
+const PROTOCOL = process.env.NEXT_PUBLIC_PROTOCOL || "http";
 
 function isAuthenticated(req: NextRequest): boolean {
   const cookie = req.cookies.get(SESSION_COOKIE_NAME);
   return !!cookie?.value;
 }
 
+function isPublicPath(pathname: string): boolean {
+  const publicPaths = [
+    "/",
+    "/login",
+    "/register",
+    "/verify",
+    "/forgot-password",
+    "/reset-password",
+    "/api/login",
+    "/api/logout",
+    "/api/session",
+    "/api/public-links",
+    "/api/auth/register",
+    "/api/auth/verify",
+    "/api/auth/forgot-password",
+    "/api/auth/reset-password",
+    "/api/cron/cleanup",
+    "/favicon.ico",
+    "/robots.txt",
+    "/sitemap.xml",
+  ];
+
+  return publicPaths.some((path) => pathname === path || pathname.startsWith(path + "/"));
+}
+
 export default function proxy(req: NextRequest): NextResponse {
   const { pathname } = req.nextUrl;
-
+  
   const hostHeader = req.headers.get("host") || "";
   const requestHost = hostHeader.split(":")[0];
+  
+  const appHostClean = APP_HOST.split(":")[0];
+  const shortHostClean = SHORT_HOST.split(":")[0];
 
   if (
     pathname.startsWith("/_next") ||
@@ -66,33 +54,43 @@ export default function proxy(req: NextRequest): NextResponse {
     return NextResponse.next();
   }
 
+  const isShortDomain = requestHost === shortHostClean && appHostClean !== shortHostClean;
+
+  if (isShortDomain) {
+    if (pathname === "/") {
+      return NextResponse.redirect(`${PROTOCOL}://${APP_HOST}`, 301);
+    }
+
+    const firstSegment = pathname.split("/")[1];
+    if (RESERVED_SLUGS.has(firstSegment)) {
+      const search = req.nextUrl.search;
+      return NextResponse.redirect(`${PROTOCOL}://${APP_HOST}${pathname}${search}`, 301);
+    }
+
+    return NextResponse.next();
+  }
+
   const authed = isAuthenticated(req);
 
-  if (isShortlinkPath(pathname)) {
-    if (SLUG_HOST && requestHost !== SLUG_HOST) {
-      const search = req.nextUrl.search || "";
-      const target = `${SLUG_BASE_URL}${pathname}${search}`;
-      return NextResponse.redirect(target, 301);
-    }
-
-    return NextResponse.next();
+  if (authed && (
+    pathname === "/" || 
+    pathname === "/login" || 
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/verify"
+  )) {
+    return NextResponse.redirect(new URL("/dash", req.url));
   }
 
-  if (isPublicPath(pathname)) {
-    if (authed && pathname === "/") {
-      return NextResponse.redirect(new URL("/dash", req.url));
+  if (!authed && !isPublicPath(pathname)) {
+    
+    const segments = pathname.split("/").filter(Boolean);
+    const isShortlinkCandidate = segments.length === 1 && !RESERVED_SLUGS.has(segments[0]);
+
+    if (!isShortlinkCandidate) {
+        const loginUrl = new URL("/", req.url);
+        return NextResponse.redirect(loginUrl);
     }
-
-    if (pathname === "/login") {
-      return NextResponse.redirect(new URL("/", req.url));
-    }
-
-    return NextResponse.next();
-  }
-
-  if (!authed) {
-    const loginUrl = new URL("/", req.url);
-    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

@@ -1,9 +1,9 @@
-//app/api/session/route.ts
+// app/api/session/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import {
-  verifyAdminJWT,
-  signAdminJWT,
+  verifyUserJWT,
+  signUserJWT,
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE,
 } from "@/lib/auth";
@@ -12,49 +12,39 @@ export async function GET(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
 
   if (!token) {
-    const res = NextResponse.json(
-      { authenticated: false },
-      { status: 401 }
-    );
-    res.cookies.set(SESSION_COOKIE_NAME, "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 0,
-      path: "/",
-    });
-    return res;
+    return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
-  const payload = verifyAdminJWT(token);
+  const payload = verifyUserJWT(token);
   if (!payload) {
-    const res = NextResponse.json(
-      { authenticated: false },
-      { status: 401 }
-    );
-    res.cookies.set(SESSION_COOKIE_NAME, "", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 0,
-      path: "/",
-    });
+    const res = NextResponse.json({ authenticated: false }, { status: 401 });
+    res.cookies.delete(SESSION_COOKIE_NAME);
     return res;
   }
 
-  const newToken = signAdminJWT(payload.username);
+  const newToken = signUserJWT({
+    id: payload.id,
+    email: payload.email,
+    name: payload.name
+  });
 
   const res = NextResponse.json({
     authenticated: true,
-    username: payload.username,
+    user: {
+      id: payload.id,
+      email: payload.email,
+      name: payload.name,
+    },
   });
+
+  const isProduction = process.env.NODE_ENV === "production";
 
   res.cookies.set(SESSION_COOKIE_NAME, newToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
     sameSite: "lax",
-    maxAge: SESSION_MAX_AGE,
     path: "/",
+    maxAge: SESSION_MAX_AGE,
   });
 
   return res;

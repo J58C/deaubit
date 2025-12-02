@@ -13,10 +13,7 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json(
-      { error: "Payload tidak valid." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
   }
 
   const targetUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
@@ -29,20 +26,24 @@ export async function POST(req: NextRequest) {
   }
 
   let slug: string;
-
   while (true) {
     const candidate = generateRandomSlug(6);
-    const existing = await prisma.shortLink.findUnique({
-      where: { slug: candidate },
-    });
+    const existing = await prisma.shortLink.findUnique({ where: { slug: candidate } });
     if (!existing) {
       slug = candidate;
       break;
     }
   }
 
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 3);
+
   const link = await prisma.shortLink.create({
-    data: { slug, targetUrl },
+    data: { 
+      slug, 
+      targetUrl,
+      expiresAt,
+    },
   });
 
   return NextResponse.json(
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
       slug: link.slug,
       targetUrl: link.targetUrl,
       createdAt: link.createdAt,
+      expiresAt: link.expiresAt,
     },
     { status: 201 }
   );

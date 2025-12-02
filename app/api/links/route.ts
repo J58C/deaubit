@@ -4,30 +4,38 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
 import bcrypt from "bcryptjs";
-import { SESSION_COOKIE_NAME, verifyAdminJWT } from "@/lib/auth";
+import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
 
-async function ensureAuth(req: NextRequest) {
+function getUser(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!token || !verifyAdminJWT(token)) {
-    throw new Error("Unauthorized");
-  }
+  if (!token) return null;
+  return verifyUserJWT(token);
 }
 
 export async function GET(req: NextRequest) {
   try {
-    await ensureAuth(req);
+    const user = getUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const links = await prisma.shortLink.findMany({
+      where: { userId: user.id }, 
       orderBy: { createdAt: "desc" },
     });
+    
     return NextResponse.json(links);
   } catch (err) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Error fetching links" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    await ensureAuth(req);
+    const user = getUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const body = await req.json();
     const targetUrl = String(body.targetUrl || "").trim();
@@ -37,33 +45,21 @@ export async function POST(req: NextRequest) {
     const expiresAtInput = body.expiresAt ? new Date(body.expiresAt) : null;
 
     if (!targetUrl || !targetUrl.startsWith("http")) {
-      return NextResponse.json(
-        { error: "Target URL tidak valid. Sertakan http(s)://" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
     if (!slug) {
       while (true) {
         const candidate = generateRandomSlug(6);
-        const existing = await prisma.shortLink.findUnique({
-          where: { slug: candidate },
-        });
+        const existing = await prisma.shortLink.findUnique({ where: { slug: candidate } });
         if (!existing) {
           slug = candidate;
           break;
         }
       }
     } else {
-      const exists = await prisma.shortLink.findUnique({
-        where: { slug },
-      });
-      if (exists) {
-        return NextResponse.json(
-          { error: "Slug sudah digunakan. Pilih slug lain." },
-          { status: 400 }
-        );
-      }
+      const exists = await prisma.shortLink.findUnique({ where: { slug } });
+      if (exists) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
     }
 
     let passwordHash = null;
@@ -76,7 +72,8 @@ export async function POST(req: NextRequest) {
         slug, 
         targetUrl,
         password: passwordHash,
-        expiresAt: expiresAtInput
+        expiresAt: expiresAtInput,
+        userId: user.id
       },
     });
 

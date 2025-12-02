@@ -5,22 +5,19 @@ export type Theme = "light" | "dark";
 const THEME_COOKIE_NAME = "deaubit_theme";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
-function getRootDomainFromEnv(): string | null {
-  const base = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!base) return null;
+function getDomainAttribute(): string {
+  const appHost = process.env.NEXT_PUBLIC_APP_HOST || "localhost";
+  
+  if (appHost.includes("localhost")) return "";
 
-  try {
-    const host = new URL(base).hostname;
-    const parts = host.split(".");
-    if (parts.length < 2) return host;
-    return parts.slice(-2).join(".");
-  } catch {
-    
-    return null;
+  const parts = appHost.split(".");
+  if (parts.length >= 2) {
+    const rootDomain = parts.slice(-2).join(".");
+    return `; domain=.${rootDomain}`; 
   }
+  
+  return "";
 }
-
-const ROOT_DOMAIN = getRootDomainFromEnv();
 
 export function readThemeFromCookieOnClient(): Theme | null {
   if (typeof document === "undefined") return null;
@@ -38,10 +35,7 @@ export function readThemeFromCookieOnClient(): Theme | null {
 export function writeThemeCookie(theme: Theme) {
   if (typeof document === "undefined") return;
 
-  let domainPart = "";
-  if (ROOT_DOMAIN) {
-    domainPart = `; domain=.${ROOT_DOMAIN}`;
-  }
+  const domainPart = getDomainAttribute();
 
   document.cookie =
     `${THEME_COOKIE_NAME}=${encodeURIComponent(theme)}` +
