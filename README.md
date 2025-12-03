@@ -2,7 +2,6 @@
 
 DeauBit adalah aplikasi URL shortener *self-hosted* dengan desain **Neo-Brutalism** yang tegas, performa tinggi, dan fitur lengkap. Dibangun untuk Anda yang ingin kendali penuh atas tautan Anda tanpa *tracker* pihak ketiga.
 
-![DeauBit Preview](https://via.placeholder.com/1200x600.png?text=DeauBit+Dashboard+Preview)
 
 ## ✨ Fitur Utama
 
@@ -38,7 +37,7 @@ Sebelum memulai, pastikan Anda memiliki:
 
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/username/deaubit.git](https://github.com/username/deaubit.git)
+    git clone [https://github.com/j58c/deaubit.git](https://github.com/j58c/deaubit.git)
     cd deaubit
     ```
 
@@ -89,24 +88,3 @@ Sebelum memulai, pastikan Anda memiliki:
     pnpm dev
     ```
     Buka [http://localhost:3000](http://localhost:3000) di browser.
-
-## 🌐 Deployment (Production)
-
-Aplikasi ini dioptimalkan untuk deployment menggunakan **Docker** atau **VPS** (Ubuntu/Debian).
-
-### Menggunakan Script Auto-Deploy (VPS)
-Jika Anda menggunakan skema **Builder (Tencent) -> Runner (Alibaba)**:
-
-1.  Pastikan file `deploy-to-ali.sh` sudah terkonfigurasi dengan IP server produksi.
-2.  Jalankan script dari mesin lokal/builder:
-    ```bash
-    ./deploy-to-ali.sh
-    ```
-    Script ini akan otomatis build, kirim file, install dependencies produksi, dan restart PM2 di server tujuan.
-
-### Perintah Manual (VPS)
-```bash
-pnpm build
-pnpm start
-# Atau menggunakan PM2
-pm2 start npm --name "deaubit" -- start
