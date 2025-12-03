@@ -1,10 +1,11 @@
 // app/reset-password/page.tsx
 
 "use client";
+
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DeauBitLogo from "@/components/DeauBitLogo";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, CheckCircle2 } from "lucide-react";
 
 function ResetContent() {
   const searchParams = useSearchParams();
@@ -40,38 +41,54 @@ function ResetContent() {
   }
 
   if (!token || !email) {
-    return <div className="text-center text-sm text-red-500">Link tidak valid (Token hilang).</div>;
+    return (
+      <div className="bg-[var(--db-danger)] text-white border-4 border-[var(--db-border)] p-6 font-bold text-center shadow-[8px_8px_0px_0px_var(--db-border)]">
+        INVALID LINK (MISSING TOKEN)
+      </div>
+    );
   }
 
   if (status === "success") {
     return (
-      <div className="text-center p-6 bg-green-50 text-green-700 rounded-lg">
-        <h3 className="font-bold">Sukses!</h3>
-        <p className="text-sm mt-1">Password berhasil diubah. Mengalihkan...</p>
+      <div className="text-center space-y-4">
+        <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full shadow-[4px_4px_0px_0px_var(--db-border)]">
+           <CheckCircle2 className="h-10 w-10 text-white" />
+        </div>
+        <h3 className="text-2xl font-black uppercase text-[var(--db-text)]">Password Updated!</h3>
+        <p className="text-[var(--db-text-muted)] font-bold">Redirecting to login...</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-xs font-medium mb-1">Password Baru</label>
+        <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text)]">New Password</label>
         <div className="relative">
-          <Lock className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           <input 
             type="password" 
-            className="db-input w-full pl-9" 
+            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            placeholder="Min. 6 karakter"
+            placeholder="Min. 6 chars"
           />
+          <Lock className="absolute left-4 top-4 h-6 w-6 text-[var(--db-text-muted)]" />
         </div>
       </div>
-      {status === "error" && <p className="text-xs text-red-500 text-center">{msg}</p>}
-      <button disabled={loading} className="db-btn-primary w-full flex justify-center py-2">
-        {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Simpan Password Baru"}
+
+      {status === "error" && (
+        <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] text-sm shadow-[4px_4px_0px_0px_var(--db-border)]">
+            ❌ {msg}
+        </div>
+      )}
+
+      <button 
+        disabled={loading} 
+        className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] py-4 font-black uppercase border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all"
+      >
+        {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto"/> : "SET NEW PASSWORD"}
       </button>
     </form>
   );
@@ -79,13 +96,13 @@ function ResetContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="db-shell w-full max-w-md mx-auto p-6 db-animate-login">
-      <div className="flex flex-col items-center gap-4 mb-6">
-        <DeauBitLogo size={40} />
-        <h1 className="text-lg font-bold">Reset Password</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      <div className="mb-8">
+        <DeauBitLogo size={60} />
       </div>
-      <div className="db-card p-5">
-        <Suspense fallback={<div className="text-center text-xs">Loading...</div>}>
+      <div className="w-full max-w-md bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[12px_12px_0px_0px_var(--db-border)]">
+        <h1 className="text-2xl font-black uppercase mb-6 text-[var(--db-text)] text-center">Secure New Password</h1>
+        <Suspense fallback={<div className="text-center font-bold animate-pulse">Loading...</div>}>
           <ResetContent />
         </Suspense>
       </div>

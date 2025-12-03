@@ -3,312 +3,137 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  LogOut,
-  ExternalLink,
-  X,
-  Loader2,
-  Trash2,
-} from "lucide-react";
 import DeauBitLogo from "@/components/DeauBitLogo";
-import {
-  ExistingShortlinksCard,
-  ShortLink,
-} from "@/components/ExistingShortlinksCard";
+import UserMenu from "@/components/UserMenu";
+import { ExistingShortlinksCard, ShortLink } from "@/components/ExistingShortlinksCard";
 import { CreateShortlinkCard } from "@/components/CreateShortlinkCard";
 import AnalyticsModal from "@/components/AnalyticsModal";
-import QrCodeModal from "@/components/QrCodeModal"; 
+import QrCodeModal from "@/components/QrCodeModal";
+import { Trash2, X, ExternalLink } from "lucide-react";
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
-  
+  const [userEmail, setUserEmail] = useState("User");
   const [targetUrl, setTargetUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [password, setPassword] = useState(""); 
   const [expiresAt, setExpiresAt] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   const [selectedLink, setSelectedLink] = useState<ShortLink | null>(null);
   const [analyticsSlug, setAnalyticsSlug] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null); 
-
   const [pendingDelete, setPendingDelete] = useState<ShortLink | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/session").then(r => r.json()).then(data => {
+        if(data.user?.email) setUserEmail(data.user.email);
+        if(data.user?.name) setUserEmail(data.user.name);
+    });
+    fetchLinks();
+  }, []);
 
   async function fetchLinks() {
     setLoadingTable(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/links");
-      const data = await res.json();
-      setLinks(data);
-    } catch {
-      setError("Failed to load links");
-    } finally {
-      setLoadingTable(false);
-    }
+    try { const res = await fetch("/api/links"); const data = await res.json(); setLinks(Array.isArray(data) ? data : []); } 
+    catch {} finally { setLoadingTable(false); }
   }
-
-  useEffect(() => {
-    fetchLinks().catch(console.error);
-  }, []);
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault(); setLoading(true); setError(null);
     try {
       const res = await fetch("/api/links", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          targetUrl,
-          slug: slug || undefined,
-          password: password || undefined,
-          expiresAt: expiresAt || undefined,
-        }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUrl, slug: slug || undefined, password: password || undefined, expiresAt: expiresAt || undefined }),
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create");
-
-      setTargetUrl("");
-      setSlug("");
-      setPassword(""); 
-      setExpiresAt("");
-      
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setTargetUrl(""); setSlug(""); setPassword(""); setExpiresAt("");
       await fetchLinks();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function requestDelete(slug: string) {
-    const link = links.find((l) => l.slug === slug) || null;
-    setPendingDelete(link);
-    setDeleteError(null);
+    } catch (e) { setError(e instanceof Error ? e.message : "Error"); } finally { setLoading(false); }
   }
 
   async function confirmDelete() {
-    if (!pendingDelete) return;
-
-    setDeleteLoading(true);
-    setDeleteError(null);
-    try {
-      const res = await fetch(`/api/links/${pendingDelete.slug}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({} as unknown));
-        throw new Error(data.error || "Failed to delete");
-      }
-
-      setPendingDelete(null);
-      await fetchLinks();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Unknown error";
-      setDeleteError(msg);
-    } finally {
-      setDeleteLoading(false);
-    }
+    if (!pendingDelete) return; setDeleteLoading(true);
+    try { await fetch(`/api/links/${pendingDelete.slug}`, { method: "DELETE" }); setPendingDelete(null); await fetchLinks(); } 
+    finally { setDeleteLoading(false); }
   }
 
-  function cancelDelete() {
-    setPendingDelete(null);
-    setDeleteError(null);
-  }
-
-  async function handleLogout() {
-    try {
-      await fetch("/api/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {
-    } finally {
-      window.location.href = "/";
-    }
-  }
-
-  const envBaseUrl =
-    typeof process !== "undefined"
-      ? process.env.NEXT_PUBLIC_BASE_URL
-      : undefined;
-
-  const baseUrl =
-    (envBaseUrl && envBaseUrl.replace(/\/+$/, "")) ||
-    (typeof window !== "undefined"
-      ? window.location.origin
-      : "http://localhost:3000");
-
-  function getDomainLabel(url: string): string {
-    try {
-      const u = new URL(url);
-      return u.hostname;
-    } catch {
-      return url;
-    }
-  }
-
-  async function copyToClipboard(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      alert("Gagal menyalin ke clipboard");
-    }
-  }
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const getDomainLabel = (url: string) => { try { return new URL(url).hostname; } catch { return url; } };
+  const copyToClipboard = (text: string) => navigator.clipboard.writeText(text).catch(() => {});
 
   return (
-    <>
-      <div className="w-full max-w-6xl mx-auto space-y-4 md:space-y-6 pb-10 px-2 md:px-4">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--db-border-soft)] pb-4 mt-2">
-          <div className="flex items-center gap-2 md:gap-3">
-            <DeauBitLogo size={36} />
-            <div className="flex flex-col">
-              <span className="text-base md:text-lg font-bold tracking-tight text-[var(--db-text)]">
-                DeauBit
-              </span>
-              <span className="text-[10px] md:text-xs db-muted">
-                URL Shortener
-              </span>
-            </div>
+    <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">
+      
+      <header className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-4 shadow-[8px_8px_0px_0px_var(--db-border)] flex items-center justify-between sticky top-4 z-30 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="bg-[var(--db-text)] p-1">
+             <DeauBitLogo size={28} />
           </div>
+          <span className="text-xl font-black uppercase tracking-tighter hidden sm:block text-[var(--db-text)]">Dashboard</span>
+        </div>
+        <UserMenu username={userEmail} />
+      </header>
 
-          <div className="flex items-center gap-3">
-             <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--db-surface-muted)] border border-[var(--db-border)]">
-                <span className="db-status-dot" />
-                <span className="text-[10px] font-medium text-[var(--db-text-muted)]">Operational</span>
-             </div>
-            <button
-              onClick={handleLogout}
-              className="db-btn-ghost inline-flex items-center gap-1.5 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-xs md:text-sm"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              <span className="font-medium">Logout</span>
-            </button>
-          </div>
-        </header>
-
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-           <div className="p-3 md:p-4 rounded-xl bg-[var(--db-surface)] border border-[var(--db-border-soft)] shadow-sm">
-              <p className="text-[10px] md:text-xs db-muted mb-1">Total Active Links</p>
-              <p className="text-xl md:text-2xl font-bold font-mono">{links.length}</p>
-           </div>
-        </section>
-
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          <div className="lg:col-span-8 h-full order-2 lg:order-1">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
+        <div className="order-2 lg:order-1 h-full min-h-[500px]">
             <ExistingShortlinksCard
-              links={links}
-              loadingTable={loadingTable}
-              baseUrl={baseUrl}
-              getDomainLabel={getDomainLabel}
-              onCopy={copyToClipboard}
-              onDelete={requestDelete}
-              onViewTarget={(link) => setSelectedLink(link)}
-              onViewStats={(slug) => setAnalyticsSlug(slug)}
-              onViewQr={(slug) => setQrSlug(slug)}
+              links={links} loadingTable={loadingTable} baseUrl={baseUrl} getDomainLabel={getDomainLabel}
+              onCopy={copyToClipboard} onDelete={(slug) => setPendingDelete(links.find(l => l.slug === slug) || null)}
+              onViewTarget={(link) => setSelectedLink(link)} onViewStats={(slug) => setAnalyticsSlug(slug)} onViewQr={(slug) => setQrSlug(slug)}
             />
-          </div>
-
-          <div className="lg:col-span-4 h-full sticky top-4 order-1 lg:order-2">
+        </div>
+        <div className="order-1 lg:order-2 lg:sticky lg:top-28">
             <CreateShortlinkCard
-              targetUrl={targetUrl}
-              slug={slug}
-              password={password}
-              expiresAt={expiresAt}
-              loading={loading}
-              error={error}
-              onSubmit={handleCreate}
-              onChangeTarget={setTargetUrl}
-              onChangeSlug={setSlug}
-              onChangePassword={setPassword}
-              onChangeExpiresAt={setExpiresAt}
+              targetUrl={targetUrl} slug={slug} password={password} expiresAt={expiresAt}
+              loading={loading} error={error} onSubmit={handleCreate}
+              onChangeTarget={setTargetUrl} onChangeSlug={setSlug} onChangePassword={setPassword} onChangeExpiresAt={setExpiresAt}
             />
-          </div>
-        </section>
+        </div>
       </div>
 
-      {analyticsSlug && (
-        <AnalyticsModal 
-          slug={analyticsSlug} 
-          onClose={() => setAnalyticsSlug(null)} 
-        />
-      )}
-
-      {qrSlug && (
-        <QrCodeModal
-          slug={qrSlug}
-          shortUrl={`${baseUrl}/${qrSlug}`}
-          onClose={() => setQrSlug(null)}
-        />
+      {analyticsSlug && <AnalyticsModal slug={analyticsSlug} onClose={() => setAnalyticsSlug(null)} />}
+      {qrSlug && <QrCodeModal slug={qrSlug} shortUrl={`${baseUrl}/${qrSlug}`} onClose={() => setQrSlug(null)} />}
+      
+      {pendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[12px_12px_0px_0px_var(--db-text)]">
+            <div className="flex items-center gap-3 text-red-600 mb-4 border-b-4 border-[var(--db-border)] pb-2">
+                <Trash2 className="h-6 w-6"/>
+                <h3 className="font-black text-xl uppercase text-[var(--db-text)]">Delete Link?</h3>
+            </div>
+            <p className="font-bold mb-6 text-[var(--db-text)]">/{pendingDelete.slug}</p>
+            <div className="flex gap-2">
+                <button onClick={() => setPendingDelete(null)} className="flex-1 py-3 font-bold border-2 border-[var(--db-border)] text-[var(--db-text)] hover:bg-[var(--db-bg)]">CANCEL</button>
+                <button onClick={confirmDelete} disabled={deleteLoading} className="flex-1 py-3 font-bold bg-red-600 text-white border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all">
+                    {deleteLoading ? "..." : "DELETE"}
+                </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedLink && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center px-4 animate-in fade-in duration-200">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedLink(null)}
-          />
-          <div className="relative w-full max-w-lg db-card db-card-pop p-6 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-sm font-bold flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4 text-[var(--db-accent)]"/> Full Target URL
-                </span>
-                <span className="db-muted text-[10px] mt-0.5">/{selectedLink.slug}</span>
-              </div>
-              <button className="db-btn-icon" onClick={() => setSelectedLink(null)}>
-                <X className="h-4 w-4" />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="w-full max-w-lg bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[12px_12px_0px_0px_var(--db-text)]">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-black text-lg uppercase text-[var(--db-text)]">Link Details</h3>
+                    <button onClick={() => setSelectedLink(null)} className="border-2 border-[var(--db-border)] p-1 hover:bg-red-100 text-[var(--db-text)]"><X className="h-5 w-5"/></button>
+                </div>
+                <div className="bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 font-mono text-xs break-all mb-4 text-[var(--db-text)]">
+                    {selectedLink.targetUrl}
+                </div>
+                <div className="flex justify-end gap-2">
+                    <a href={selectedLink.targetUrl} target="_blank" className="bg-[var(--db-primary)] text-[var(--db-primary-fg)] px-4 py-2 font-bold border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] flex gap-2">
+                        OPEN <ExternalLink className="h-4 w-4"/>
+                    </a>
+                </div>
             </div>
-            <div className="p-3 rounded-lg bg-[var(--db-surface-muted)] border border-[var(--db-border)] break-all font-mono text-xs">
-              {selectedLink.targetUrl}
-            </div>
-            <div className="flex justify-end gap-2">
-              <button className="db-btn-ghost text-xs" onClick={() => copyToClipboard(selectedLink.targetUrl)}>Copy URL</button>
-              <a href={selectedLink.targetUrl} target="_blank" rel="noreferrer" className="db-btn-primary text-xs">Open Link</a>
-            </div>
-          </div>
         </div>
       )}
-
-      {pendingDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-200">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={cancelDelete}
-          />
-          <div className="relative w-full max-w-sm db-card db-card-pop p-6 space-y-4 shadow-2xl border-red-100 dark:border-red-900/30">
-            <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-              <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full">
-                 <Trash2 className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-bold">Delete Link?</h3>
-            </div>
-            <p className="text-sm db-muted">
-              Are you sure you want to delete <span className="font-mono font-bold text-[var(--db-text)]">/{pendingDelete.slug}</span>? This action cannot be undone.
-            </p>
-            {deleteError && (
-              <p className="text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">{deleteError}</p>
-            )}
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button onClick={cancelDelete} disabled={deleteLoading} className="db-btn-ghost text-xs">Cancel</button>
-              <button onClick={confirmDelete} disabled={deleteLoading} className="db-btn-primary bg-red-600 hover:bg-red-700 text-white border-transparent text-xs">
-                {deleteLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : "Delete Forever"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }

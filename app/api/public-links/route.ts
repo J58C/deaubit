@@ -3,12 +3,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 interface CreateLinkRequest {
   targetUrl?: string;
 }
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+  const limit = await checkRateLimit(ip, "public_link");
+
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: `Limit tercapai. Tunggu ${Math.ceil((limit.retryAfter || 60) / 60)} menit.` },
+      { status: 429 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();

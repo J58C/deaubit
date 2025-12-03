@@ -3,16 +3,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, BarChart3, Globe, Monitor, Smartphone } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { X, Loader2, BarChart3, Globe, Monitor } from "lucide-react";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface AnalyticsModalProps {
   slug: string;
@@ -32,138 +24,94 @@ export default function AnalyticsModal({ slug, onClose }: AnalyticsModalProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/links/${slug}/stats`)
-      .then((res) => res.json())
-      .then((res) => {
-        setData(res);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    fetch(`/api/links/${slug}/stats`).then((res) => res.json()).then((res) => {
+        setData(res); setLoading(false);
+      }).catch(() => setLoading(false));
   }, [slug]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
-      {/* Modal Content */}
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto db-card db-card-pop p-6 space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[12px_12px_0px_0px_var(--db-border)] p-6">
         
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6 border-b-4 border-[var(--db-border)] pb-4">
           <div>
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-(--db-accent)" />
-              Analytics: <span className="font-mono text-(--db-text)">/{slug}</span>
+            <h2 className="text-xl font-black uppercase flex items-center gap-2 text-[var(--db-text)]">
+              <BarChart3 className="h-6 w-6 text-[var(--db-primary)]" />
+              Analytics: <span className="font-mono bg-[var(--db-accent)] px-2 text-black">/{slug}</span>
             </h2>
-            <p className="db-muted text-xs mt-1">
-              Statistik performa link dalam 7 hari terakhir.
-            </p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--db-text-muted)] mt-1">Performance Data (7 Days)</p>
           </div>
-          <button onClick={onClose} className="db-btn-icon">
-            <X className="h-5 w-5" />
+          <button onClick={onClose} className="border-2 border-[var(--db-border)] p-2 hover:bg-red-500 hover:text-white transition-colors">
+            <X className="h-6 w-6" />
           </button>
         </div>
 
         {loading ? (
-          <div className="h-60 flex items-center justify-center text-db-muted">
-            <Loader2 className="h-8 w-8 animate-spin" />
+          <div className="h-60 flex items-center justify-center text-[var(--db-text-muted)] font-bold animate-pulse">
+            <Loader2 className="h-10 w-10 animate-spin mr-2" /> LOADING DATA...
           </div>
         ) : !data ? (
-          <div className="h-40 flex items-center justify-center text-db-muted">
-            Gagal memuat data.
+          <div className="h-40 flex items-center justify-center font-bold text-red-500 border-2 border-dashed border-[var(--db-border)]">
+            FAILED TO LOAD DATA.
           </div>
         ) : (
-          <div className="space-y-6 animate-in fade-in duration-500">
-            
-            {/* Total Clicks Card */}
+          <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl border border-(--db-border-soft) bg-(--db-surface-muted)">
-                <p className="text-xs db-muted mb-1">Total Clicks</p>
-                <p className="text-2xl font-bold">{data.total}</p>
-              </div>
-              <div className="p-4 rounded-xl border border-(--db-border-soft) bg-(--db-surface-muted)">
-                <p className="text-xs db-muted mb-1">Top Country</p>
-                <div className="flex items-center gap-2">
-                   <Globe className="h-4 w-4 opacity-50"/>
-                   <span className="font-semibold">{data.topCountries[0]?.name || "-"}</span>
+              {[
+                { label: "TOTAL CLICKS", value: data.total, icon: null },
+                { label: "TOP COUNTRY", value: data.topCountries[0]?.name || "-", icon: <Globe className="h-4 w-4"/> },
+                { label: "TOP DEVICE", value: data.topOS[0]?.name || "-", icon: <Monitor className="h-4 w-4"/> }
+              ].map((stat, i) => (
+                <div key={i} className="p-4 bg-[var(--db-bg)] border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--db-text-muted)] mb-1">{stat.label}</p>
+                  <div className="flex items-center gap-2 text-[var(--db-text)]">
+                     {stat.icon}
+                     <p className="text-2xl font-black truncate">{stat.value}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="p-4 rounded-xl border border-(--db-border-soft) bg-(--db-surface-muted)">
-                <p className="text-xs db-muted mb-1">Top Device/OS</p>
-                 <div className="flex items-center gap-2">
-                   <Monitor className="h-4 w-4 opacity-50"/>
-                   <span className="font-semibold">{data.topOS[0]?.name || "-"}</span>
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* CHART AREA */}
-            <div className="h-64 w-full p-2 border border-(--db-border-soft) rounded-xl">
+            <div className="h-64 w-full p-2 border-2 border-[var(--db-border)] bg-[var(--db-surface)]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={data.chartData}>
                   <defs>
                     <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      <stop offset="5%" stopColor="var(--db-primary)" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="var(--db-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--db-border)" />
-                  <XAxis 
-                    dataKey="date" 
-                    fontSize={10} 
-                    tickLine={false} 
-                    axisLine={false}
-                    tickFormatter={(str) => str.slice(5)} // Show MM-DD only
-                  />
-                  <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false}/>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--db-text-muted)" opacity={0.2} />
+                  <XAxis dataKey="date" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(str) => str.slice(5)} stroke="var(--db-text)" />
+                  <YAxis fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} stroke="var(--db-text)" />
                   <Tooltip 
-                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                    labelStyle={{ color: '#666' }}
+                    contentStyle={{ borderRadius: '0px', border: '2px solid var(--db-border)', boxShadow: '4px 4px 0px 0px var(--db-border)', backgroundColor: 'var(--db-surface)' }}
+                    itemStyle={{ color: 'var(--db-text)', fontWeight: 'bold' }}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="count" 
-                    stroke="#3b82f6" 
-                    strokeWidth={2}
-                    fillOpacity={1} 
-                    fill="url(#colorCount)" 
-                  />
+                  <Area type="monotone" dataKey="count" stroke="var(--db-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorCount)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
 
-            {/* DETAIL LISTS */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Top Browsers */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Top Browsers</h3>
-                <div className="space-y-2">
-                  {data.topBrowsers.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs p-2 rounded bg-(--db-surface-muted)">
-                      <span>{item.name}</span>
-                      <span className="font-mono font-bold">{item.value}</span>
-                    </div>
-                  ))}
-                  {data.topBrowsers.length === 0 && <p className="text-xs db-muted">Belum ada data</p>}
+              {[
+                { title: "TOP BROWSERS", list: data.topBrowsers },
+                { title: "TOP LOCATIONS", list: data.topCountries }
+              ].map((section, idx) => (
+                <div key={idx}>
+                   <h3 className="text-sm font-black uppercase border-b-2 border-[var(--db-border)] mb-3 pb-1 text-[var(--db-text)]">{section.title}</h3>
+                   <div className="space-y-2">
+                      {section.list.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs p-2 bg-[var(--db-bg)] border-2 border-[var(--db-border)] text-[var(--db-text)]">
+                          <span className="font-bold">{item.name || "Unknown"}</span>
+                          <span className="font-mono bg-[var(--db-primary)] text-[var(--db-primary-fg)] px-1.5">{item.value}</span>
+                        </div>
+                      ))}
+                      {section.list.length === 0 && <p className="text-xs font-medium text-[var(--db-text-muted)]">No data recorded.</p>}
+                   </div>
                 </div>
-              </div>
-
-              {/* Top Countries */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Top Locations</h3>
-                <div className="space-y-2">
-                  {data.topCountries.map((item, i) => (
-                    <div key={i} className="flex items-center justify-between text-xs p-2 rounded bg-(--db-surface-muted)">
-                      <span>{item.name || "Unknown"}</span>
-                      <span className="font-mono font-bold">{item.value}</span>
-                    </div>
-                  ))}
-                  {data.topCountries.length === 0 && <p className="text-xs db-muted">Belum ada data</p>}
-                </div>
-              </div>
+              ))}
             </div>
-
           </div>
         )}
       </div>

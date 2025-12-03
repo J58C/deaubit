@@ -3,21 +3,26 @@
 import DeauBitLogo from "@/components/DeauBitLogo";
 import VerifyForm from "@/components/VerifyForm";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export default function VerifyPage() {
   return (
-    <div className="db-shell w-full max-w-md mx-auto p-6 db-animate-login">
-      <div className="flex flex-col items-center gap-4 mb-6">
-        <DeauBitLogo size={40} />
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+      
+      <div className="w-full max-w-md space-y-6">
+        <div className="flex justify-center mb-4">
+            <DeauBitLogo size={60} />
+        </div>
+
+        <VerifyForm />
+
+        <div className="text-center">
+          <Link href="/register" className="inline-flex items-center gap-2 font-bold text-sm text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors">
+            <ArrowLeft className="h-4 w-4" /> Incorrect Email? Go Back
+          </Link>
+        </div>
       </div>
 
-      <VerifyForm />
-
-      <div className="mt-6 text-center text-xs">
-        <Link href="/register" className="db-muted hover:text-[var(--db-text)] transition-colors">
-          &larr; Kembali ke registrasi
-        </Link>
-      </div>
     </div>
   );
 }

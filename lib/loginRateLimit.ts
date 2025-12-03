@@ -1,53 +1,30 @@
 // lib/loginRateLimit.ts
 
-type Attempt = {
-  count: number;
-  firstAttemptAt: number;
-};
+import { redis } from "@/lib/redis";
 
-const WINDOW_MS = 60_000; // 1 menit
-const MAX_ATTEMPTS = 3;
+const WINDOW_SECONDS = 60 * 15;
+const MAX_ATTEMPTS = 5;
 
-const attempts = new Map<string, Attempt>();
+export async function isLoginBlocked(identifier: string) {
+  const key = `login_attempts:${identifier}`;
 
-export function isLoginBlocked(key: string) {
-  const now = Date.now();
-  const entry = attempts.get(key);
+  const attempts = await redis.get(key);
+  const count = attempts ? parseInt(attempts) : 0;
 
-  if (!entry) {
-    return { blocked: false as const };
-  }
-
-  const diff = now - entry.firstAttemptAt;
-
-  if (diff > WINDOW_MS) {
-    attempts.delete(key);
-    return { blocked: false as const };
-  }
-
-  if (entry.count >= MAX_ATTEMPTS) {
-    const retryAfterMs = WINDOW_MS - diff;
-    return { blocked: true as const, retryAfterMs };
+  if (count >= MAX_ATTEMPTS) {
+    const ttl = await redis.ttl(key);
+    return { blocked: true as const, retryAfter: ttl };
   }
 
   return { blocked: false as const };
 }
 
-export function registerFailedLogin(key: string) {
-  const now = Date.now();
-  const entry = attempts.get(key);
+export async function registerFailedLogin(identifier: string) {
+  const key = `login_attempts:${identifier}`;
+  
+  const current = await redis.incr(key);
 
-  if (!entry) {
-    attempts.set(key, { count: 1, firstAttemptAt: now });
-    return;
+  if (current === 1) {
+    await redis.expire(key, WINDOW_SECONDS);
   }
-
-  const diff = now - entry.firstAttemptAt;
-
-  if (diff > WINDOW_MS) {
-    attempts.set(key, { count: 1, firstAttemptAt: now });
-    return;
-  }
-
-  entry.count += 1;
 }

@@ -14,13 +14,18 @@ export default function PageWrapperClient({
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
 
-  const isLogin = pathname === "/";
+  const isAuthPage = [
+    "/", 
+    "/login", 
+    "/register", 
+    "/verify", 
+    "/forgot-password", 
+    "/reset-password"
+  ].includes(pathname);
 
   const isSlugPage =
     segments.length === 1 &&
-    pathname !== "/" &&
-    pathname !== "/dash" &&
-    !pathname.startsWith("/api");
+    !["dash", "api", "login", "register", "verify", "forgot-password", "reset-password"].includes(segments[0]);
 
   if (isSlugPage) {
     return (
@@ -30,11 +35,11 @@ export default function PageWrapperClient({
     );
   }
 
-  if (isLogin) {
+  if (isAuthPage) {
     return (
       <>
         <ThemeToggle />
-        <div className="min-h-screen flex items-center justify-center px-4 py-6">
+        <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 pb-24 transition-all duration-300">
           {children}
         </div>
       </>
@@ -44,7 +49,7 @@ export default function PageWrapperClient({
   return (
     <>
       <ThemeToggle />
-      <div className="min-h-screen flex px-4 items-center md:items-start justify-center py-6 md:py-8">
+      <div className="min-h-screen flex flex-col px-4 items-center md:items-start justify-start py-8 pb-28 transition-all duration-300">
         <AppShell>{children}</AppShell>
       </div>
     </>

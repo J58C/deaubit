@@ -3,9 +3,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Mail, KeyRound, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { Loader2, Mail, Eye, EyeOff, Terminal } from "lucide-react";
 import type { LoginResponse } from "@/types";
 
 interface LoginFormProps {
@@ -20,26 +19,17 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
     const [loading, setLoading] = useState(false);
     const [cooldown, setCooldown] = useState<number | null>(null);
 
-    const router = useRouter();
-
     useEffect(() => {
         if (cooldown === null) return;
-        if (cooldown <= 0) {
-            setCooldown(null);
-            return;
-        }
-        const id = setInterval(() => {
-            setCooldown((prev) => (prev === null || prev <= 1 ? null : prev - 1));
-        }, 1000);
+        if (cooldown <= 0) { setCooldown(null); return; }
+        const id = setInterval(() => setCooldown((prev) => (prev === null || prev <= 1 ? null : prev - 1)), 1000);
         return () => clearInterval(id);
     }, [cooldown]);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (cooldown !== null && cooldown > 0) return;
-
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
 
         try {
             const res = await fetch("/api/login", {
@@ -47,135 +37,107 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
             });
-
             const data: LoginResponse = await res.json().catch(() => ({}));
 
             if (res.status === 429) {
                 const retry = typeof data.retryAfter === "number" ? data.retryAfter : 60;
                 setCooldown(retry);
-                setError(`Terlalu banyak percobaan. Tunggu ${retry} detik.`);
+                setError(`Terlalu banyak percobaan. Tunggu ${retry}s.`);
                 return;
             }
-
-            if (!res.ok) {
-                throw new Error(typeof data.error === "string" ? data.error : "Login gagal");
-            }
-
+            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Login gagal");
+            
             window.location.href = nextPath;
-
         } catch (err) {
-            const msg = err instanceof Error ? err.message : "Login gagal";
-            setError(msg);
+            setError(err instanceof Error ? err.message : "Login gagal");
             setLoading(false);
         }
     }
 
     return (
-        <section className="flex items-stretch mt-1 md:mt-0">
-            <div className="db-card w-full px-5 py-5 flex flex-col">
-                <div className="flex items-center justify-between gap-3 mb-3">
-                    <div className="inline-flex items-center gap-2">
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--db-accent-soft)] text-[var(--db-accent)]">
-                            <ShieldCheck className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-xs font-semibold">User login</span>
+        <section className="flex flex-col h-full justify-center">
+            <div className="border-4 border-[var(--db-border)] p-8 bg-[var(--db-surface)] shadow-[8px_8px_0px_0px_var(--db-border)] hover:shadow-[12px_12px_0px_0px_var(--db-border)] transition-shadow duration-300">
+                
+                <div className="flex items-center gap-4 mb-8 border-b-4 border-[var(--db-border)] pb-4">
+                    <div className="bg-[var(--db-accent)] text-[var(--db-accent-fg)] p-3 border-2 border-[var(--db-border)]">
+                        <Terminal className="h-6 w-6" />
                     </div>
-                    <div className="db-badge inline-flex items-center gap-1">
-                        <span className="db-status-dot" />
-                        Secure
+                    <div>
+                        <h2 className="text-2xl font-black uppercase tracking-tighter text-[var(--db-text)]">LOGIN AREA</h2>
+                        <p className="text-xs font-bold text-[var(--db-text-muted)] uppercase tracking-widest">Secure Access</p>
                     </div>
                 </div>
 
-                <div className="w-full max-w-sm mx-auto flex-1 flex flex-col">
-                    <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-3">
-                        <div>
-                            <label className="flex items-center gap-1 text-xs font-medium">
-                                <Mail className="h-3 w-3" />
-                                Email
-                            </label>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="font-black text-sm uppercase tracking-wider mb-2 block text-[var(--db-text)]">
+                            Email Address
+                        </label>
+                        <div className="relative group">
                             <input
                                 type="email"
-                                className="db-input mt-1 w-full"
-                                placeholder="nama@email.com"
-                                autoComplete="email"
+                                className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-base font-bold text-[var(--db-text)] placeholder:font-normal placeholder:text-[var(--db-text-muted)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all"
+                                placeholder="user@example.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
+                            <Mail className="absolute right-4 top-3.5 h-5 w-5 text-[var(--db-text-muted)] pointer-events-none" />
                         </div>
+                    </div>
 
-                        <div>
-                            <div className="flex items-center justify-between">
-                                <label className="flex items-center gap-1 text-xs font-medium">
-                                    <KeyRound className="h-3 w-3" />
-                                    Password
-                                </label>
-                                <Link 
-                                    href="/forgot-password" 
-                                    className="text-[0.65rem] db-muted hover:text-[var(--db-accent)] transition-colors"
-                                    tabIndex={-1}
-                                >
-                                    Lupa password?
-                                </Link>
-                            </div>
-                            
-                            <div className="relative mt-1">
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    className="db-input w-full pr-9"
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword((prev) => !prev)}
-                                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors"
-                                    aria-label={showPassword ? "Sembunyikan" : "Tampilkan"}
-                                >
-                                    {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                                </button>
-                            </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <label className="font-black text-sm uppercase tracking-wider block text-[var(--db-text)]">Password</label>
+                            <Link href="/forgot-password" className="text-xs font-bold text-[var(--db-primary)] hover:underline decoration-2">
+                                LUPA PASSWORD?
+                            </Link>
                         </div>
-
-                        <div className="min-h-[2.3rem] mt-1">
-                            {error && (
-                                <p className="text-[0.7rem] rounded-lg border border-red-200 bg-red-50 text-red-600 px-3 py-2 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400">
-                                    {error}
-                                </p>
-                            )}
-                        </div>
-
-                        <div className="pt-1 flex justify-center">
+                        <div className="relative group">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-base font-bold text-[var(--db-text)] placeholder:font-normal placeholder:text-[var(--db-text-muted)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
                             <button
-                                type="submit"
-                                disabled={loading || (cooldown !== null && cooldown > 0)}
-                                className={`db-btn-primary inline-flex items-center justify-center gap-2 rounded-full w-full md:w-auto px-6 transition-all duration-200 transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--db-bg)] ${
-                                    loading || (cooldown !== null && cooldown > 0)
-                                        ? "cursor-not-allowed opacity-80"
-                                        : "hover:-translate-y-px hover:shadow-[0_0_22px_rgba(59,130,246,0.45)] active:translate-y-px active:scale-[0.97]"
-                                }`}
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-3.5 text-[var(--db-text-muted)] hover:text-[var(--db-text)] hover:scale-110 transition-transform cursor-pointer"
                             >
-                                {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                                <span>
-                                    {loading
-                                        ? "Memeriksa..."
-                                        : cooldown !== null && cooldown > 0
-                                        ? `Tunggu ${cooldown}s`
-                                        : "Masuk dashboard"}
-                                </span>
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
-                    </form>
-
-                    <div className="mt-4 text-center text-xs">
-                        <span className="db-muted">Belum punya akun? </span>
-                        <Link href="/register" className="font-semibold text-[var(--db-accent)] hover:underline">
-                            Daftar sekarang
-                        </Link>
                     </div>
+
+                    {error && (
+                        <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] flex items-center gap-2">
+                            <span>❌</span> {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={loading || (cooldown !== null && cooldown > 0)}
+                        className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] border-2 border-[var(--db-border)] py-4 font-black text-lg uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {loading ? (
+                            <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin h-5 w-5"/> Loading...</span>
+                        ) : cooldown ? (
+                            `Tunggu (${cooldown}s)`
+                        ) : (
+                            "MASUK SEKARANG"
+                        )}
+                    </button>
+                </form>
+
+                <div className="mt-8 text-center pt-6 border-t-4 border-[var(--db-border)] border-dotted">
+                    <span className="text-sm font-bold text-[var(--db-text-muted)]">Belum punya akun? </span>
+                    <Link href="/register" className="inline-block ml-1 text-sm font-black bg-[var(--db-accent)] text-[var(--db-accent-fg)] px-2 border-2 border-[var(--db-border)] hover:shadow-[2px_2px_0px_0px_var(--db-border)] hover:-translate-y-0.5 transition-all">
+                        DAFTAR DISINI
+                    </Link>
                 </div>
             </div>
         </section>

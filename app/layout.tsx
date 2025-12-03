@@ -66,28 +66,13 @@ export default function RootLayout({
           {`(function() {
             try {
               var themeCookieName = '${THEME_COOKIE_NAME}';
-
-              // A. Baca dari cookie
-              var cookieMatch = document.cookie.match(
-                new RegExp('(?:^|; )' + themeCookieName + '=(dark|light)')
-              );
+              var cookieMatch = document.cookie.match(new RegExp('(?:^|; )' + themeCookieName + '=(dark|light)'));
               var cookieTheme = cookieMatch ? cookieMatch[1] : null;
-
-              // B. Fallback localStorage
               var stored = null;
-              try {
-                stored = window.localStorage.getItem('theme');
-              } catch(e) {}
+              try { stored = window.localStorage.getItem('theme'); } catch(e) {}
               var storedTheme = (stored === 'dark' || stored === 'light') ? stored : null;
-
-              // C. Fallback System Preference
               var prefersDark = false;
-              try {
-                prefersDark = window.matchMedia &&
-                  window.matchMedia('(prefers-color-scheme: dark)').matches;
-              } catch(e) {}
-
-              // PRIORITAS: cookie > localStorage > system
+              try { prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
               var theme = cookieTheme || storedTheme || (prefersDark ? 'dark' : 'light');
 
               if (theme === 'dark') {
@@ -95,23 +80,17 @@ export default function RootLayout({
               } else {
                 document.documentElement.classList.remove('dark');
               }
-
-              // Sinkronisasi cookie agar server tahu preference user
+              
               try {
-                // Hapus cookie lama (cleanup)
                 document.cookie = themeCookieName + '=; path=/; max-age=0; SameSite=Lax';
-                
-                // Set cookie baru
-                document.cookie =
-                  themeCookieName + '=' + theme +
-                  '; path=/; max-age=31536000; SameSite=Lax${cookieDomainPart}';
+                document.cookie = themeCookieName + '=' + theme + '; path=/; max-age=31536000; SameSite=Lax${cookieDomainPart}';
               } catch(e) {}
             } catch(e) {}
           })();`}
         </Script>
       </head>
 
-      <body className="min-h-screen antialiased font-sans bg-[var(--db-bg)] text-[var(--db-text)] selection:bg-[var(--db-accent-soft)]">
+      <body className="antialiased">
         <PageWrapperClient>{children}</PageWrapperClient>
       </body>
     </html>

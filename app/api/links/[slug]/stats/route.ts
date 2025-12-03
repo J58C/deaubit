@@ -1,14 +1,13 @@
-//app/api/links/[slug]/stat/route.ts
+// app/api/links/[slug]/stats/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE_NAME, verifyAdminJWT } from "@/lib/auth";
+import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
 
-async function ensureAuth(req: NextRequest) {
+function getUser(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  if (!token || !verifyAdminJWT(token)) {
-    throw new Error("Unauthorized");
-  }
+  if (!token) return null;
+  return verifyUserJWT(token);
 }
 
 type ClickData = {
@@ -24,7 +23,10 @@ export async function GET(
   context: { params: Promise<{ slug: string }> }
 ) {
   try {
-    await ensureAuth(req);
+    const user = getUser(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { slug } = await context.params;
 
@@ -34,6 +36,10 @@ export async function GET(
 
     if (!link) {
       return NextResponse.json({ error: "Link not found" }, { status: 404 });
+    }
+
+    if (link.userId !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const clicks = (await prisma.click.findMany({
@@ -91,8 +97,8 @@ export async function GET(
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Unauthorized or Error" },
-      { status: 401 }
+      { error: "Internal Server Error" },
+      { status: 500 }
     );
   }
 }

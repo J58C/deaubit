@@ -21,11 +21,10 @@ export async function POST(req: NextRequest) {
   }
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const key = `login:${ip}`;
-  const rate = isLoginBlocked(key);
+  const rate = await isLoginBlocked(ip);
   
   if (rate.blocked) {
-    const retrySeconds = Math.ceil((rate.retryAfterMs ?? 60_000) / 1000);
+    const retrySeconds = rate.retryAfter || 60;
     return NextResponse.json(
       { error: `Terlalu banyak percobaan. Tunggu ${retrySeconds} detik.`, retryAfter: retrySeconds },
       { status: 429 }
@@ -36,13 +35,13 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.password) {
-      registerFailedLogin(key);
+      await registerFailedLogin(ip);
       return NextResponse.json({ error: "Email atau password salah." }, { status: 401 });
     }
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
-      registerFailedLogin(key);
+      await registerFailedLogin(ip);
       return NextResponse.json({ error: "Email atau password salah." }, { status: 401 });
     }
 
@@ -59,7 +58,7 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ ok: true });
 
     const isProduction = process.env.NODE_ENV === "production";
-
+    
     res.cookies.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: isProduction,

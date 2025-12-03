@@ -1,6 +1,6 @@
 //components/CreateShortlinkCard.tsx
 
-import { Calendar, Lock, Link2, Type, ArrowRight, Loader2 } from "lucide-react";
+import { Calendar, Lock, Link2, ArrowRight, Loader2 } from "lucide-react";
 
 interface CreateShortlinkCardProps {
   targetUrl: string;
@@ -17,55 +17,39 @@ interface CreateShortlinkCardProps {
 }
 
 export function CreateShortlinkCard({
-  targetUrl,
-  slug,
-  password,
-  expiresAt,
-  loading,
-  error,
-  onSubmit,
-  onChangeTarget,
-  onChangeSlug,
-  onChangePassword,
-  onChangeExpiresAt,
+  targetUrl, slug, password, expiresAt, loading, error, onSubmit,
+  onChangeTarget, onChangeSlug, onChangePassword, onChangeExpiresAt,
 }: CreateShortlinkCardProps) {
   
   return (
-    <div className="db-card db-card-raise db-animate p-5 h-full flex flex-col bg-gradient-to-br from-[var(--db-surface)] to-[var(--db-surface-muted)]">
-      <div className="mb-4">
-        <h2 className="text-base font-bold flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-[var(--db-accent-soft)] text-[var(--db-accent-text)]">
-            <Link2 className="h-4 w-4" />
-          </div>
-          Create Link
-        </h2>
-        <p className="text-xs db-muted mt-1 ml-1">Paste your long URL below.</p>
+    <div className="bg-[var(--db-surface)] border-2 md:border-4 border-[var(--db-border)] p-6 shadow-[8px_8px_0px_0px_var(--db-border)]">
+      <div className="mb-6 flex items-center gap-3 border-b-2 md:border-b-4 border-[var(--db-border)] pb-4">
+        <div className="bg-[var(--db-accent)] p-2 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)]">
+            <Link2 className="h-6 w-6 text-[var(--db-accent-fg)]" />
+        </div>
+        <h2 className="text-xl font-black uppercase tracking-tighter text-[var(--db-text)]">New Link</h2>
       </div>
 
-      <form className="space-y-4 flex-1 flex flex-col" onSubmit={onSubmit}>
-        
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold ml-1">Destination URL</label>
-          <div className="relative group">
-            <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
-            <input
-              className="db-input pl-9"
-              placeholder="https://example.com"
-              value={targetUrl}
-              onChange={(e) => onChangeTarget(e.target.value)}
-              required
-              disabled={loading}
-            />
-          </div>
+      <form className="space-y-6" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <label className="text-xs font-black uppercase tracking-widest text-[var(--db-text-muted)]">Target URL</label>
+          <input
+            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:bg-[var(--db-surface)] focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
+            placeholder="https://very-long-url.com/..."
+            value={targetUrl}
+            onChange={(e) => onChangeTarget(e.target.value)}
+            required
+            disabled={loading}
+          />
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold ml-1">Custom Slug <span className="font-normal text-[var(--db-text-muted)]">(Optional)</span></label>
-          <div className="relative group">
-            <Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
+        <div className="space-y-2">
+          <label className="text-xs font-black uppercase tracking-widest text-[var(--db-text-muted)]">Custom Slug (Optional)</label>
+          <div className="flex">
+            <span className="bg-[var(--db-text-muted)] text-[var(--db-bg)] px-3 py-3 text-sm font-mono font-bold flex items-center">/</span>
             <input
-              className="db-input pl-9 font-mono text-sm"
-              placeholder="Custom link"
+              className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] border-l-0 px-4 py-3 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:bg-[var(--db-surface)] focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
+              placeholder="my-link"
               value={slug}
               onChange={(e) => onChangeSlug(e.target.value)}
               disabled={loading}
@@ -73,59 +57,47 @@ export function CreateShortlinkCard({
           </div>
         </div>
 
-        <div className="border-t border-[var(--db-border-soft)] my-2 opacity-50" />
-        <p className="text-[10px] font-semibold uppercase tracking-wider db-muted ml-1">Advanced Options</p>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold ml-1">Password Protection</label>
-          <div className="relative group">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
-            <input
-              type="text"
-              className="db-input pl-9"
-              placeholder="Leave empty for public access"
-              value={password}
-              onChange={(e) => onChangePassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-semibold ml-1">Expiration Date</label>
-          <div className="relative group">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--db-text-muted)] group-focus-within:text-[var(--db-accent)] transition-colors" />
-            <input
-              type="datetime-local"
-              className="db-input pl-9" 
-              value={expiresAt}
-              onChange={(e) => onChangeExpiresAt(e.target.value)}
-              disabled={loading}
-              style={{ colorScheme: 'light' }}
-            />
-          </div>
+        <div className="p-4 border-2 border-[var(--db-border)] bg-[var(--db-bg)] space-y-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--db-text-muted)]">Advanced Settings</p>
+            
+            <div className="grid grid-cols-1 gap-4">
+                <div className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-[var(--db-text)]" />
+                    <input
+                        type="text"
+                        className="w-full bg-[var(--db-surface)] border-2 border-[var(--db-border)] px-3 py-2 text-xs font-medium text-[var(--db-text)] focus:outline-none focus:shadow-[2px_2px_0px_0px_var(--db-border)]"
+                        placeholder="Password (Optional)"
+                        value={password}
+                        onChange={(e) => onChangePassword(e.target.value)}
+                        disabled={loading}
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-[var(--db-text)]" />
+                    <input
+                        type="datetime-local"
+                        className="w-full bg-[var(--db-surface)] border-2 border-[var(--db-border)] px-3 py-2 text-xs font-medium text-[var(--db-text)] focus:outline-none focus:shadow-[2px_2px_0px_0px_var(--db-border)]"
+                        value={expiresAt}
+                        onChange={(e) => onChangeExpiresAt(e.target.value)}
+                        disabled={loading}
+                    />
+                </div>
+            </div>
         </div>
 
         {error && (
-          <div className="text-xs bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg border border-red-200 dark:border-red-900/50 flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-            <span className="block h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
-            {error}
+          <div className="bg-[var(--db-danger)] text-[var(--db-danger-fg)] text-xs font-bold p-3 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)]">
+            ❌ {error}
           </div>
         )}
 
-        <div className="mt-auto pt-4">
-          <button
-            type="submit"
-            disabled={loading || !targetUrl}
-            className="db-btn-primary w-full flex items-center justify-center gap-2 h-11 text-sm shadow-lg shadow-blue-500/20 disabled:shadow-none disabled:opacity-70 transition-all"
-          >
-            {loading ? (
-              <>Saving Link... <Loader2 className="h-4 w-4 animate-spin ml-1" /></>
-            ) : (
-              <>Create Shortlink <ArrowRight className="h-4 w-4 ml-1" /></>
-            )}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={loading || !targetUrl}
+          className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] border-2 border-[var(--db-border)] py-4 font-black text-sm uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_var(--db-border)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+        >
+          {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : <><ArrowRight className="h-5 w-5" /> SHORTEN IT!</>}
+        </button>
       </form>
     </div>
   );
