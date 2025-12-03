@@ -2,7 +2,8 @@
 
 "use client";
 
-import { Copy, Trash2, QrCode, BarChart3, ExternalLink, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Copy, Trash2, QrCode, BarChart3, ExternalLink, Clock, AlertTriangle } from "lucide-react";
 
 export interface ShortLink {
   id: string;
@@ -25,8 +26,33 @@ interface ExistingShortlinksCardProps {
 }
 
 function ShortlinkRow({ link, baseUrl, getDomainLabel, onViewStats, onViewQr, onCopy, onDelete }: any) {
+  const [isMounted, setIsMounted] = useState(false);
   const shortUrl = `${baseUrl}/${link.slug}`;
   const domainLabel = getDomainLabel(link.targetUrl);
+
+  useEffect(() => { setIsMounted(true); }, []);
+
+  const getExpiryStatus = () => {
+    if (!link.expiresAt) return null;
+    const now = new Date();
+    const expiry = new Date(link.expiresAt);
+    const isExpired = now > expiry;
+    
+    const dateStr = expiry.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+    if (isExpired) {
+      return (
+        <span className="text-[10px] bg-red-100 text-red-800 border-2 border-[var(--db-border)] px-2 py-0.5 flex items-center gap-1 font-bold whitespace-nowrap">
+           <AlertTriangle className="h-3 w-3"/> EXPIRED
+        </span>
+      );
+    }
+    return (
+      <span className="text-[10px] bg-orange-100 text-orange-800 border-2 border-[var(--db-border)] px-2 py-0.5 flex items-center gap-1 font-bold whitespace-nowrap" title={`Expires on ${expiry.toLocaleString()}`}>
+         <Clock className="h-3 w-3"/> {dateStr}
+      </span>
+    );
+  };
 
   return (
     <div className="group relative bg-[var(--db-surface)] border-2 border-[var(--db-border)] p-3 md:p-4 shadow-[3px_3px_0px_0px_var(--db-border)] md:shadow-[4px_4px_0px_0px_var(--db-border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_var(--db-border)] transition-all flex flex-col justify-between h-full">
@@ -36,17 +62,13 @@ function ShortlinkRow({ link, baseUrl, getDomainLabel, onViewStats, onViewQr, on
               <a href={shortUrl} target="_blank" className="bg-[var(--db-accent)] text-[var(--db-accent-fg)] text-xs md:text-sm font-black px-2 md:px-3 py-1 border-2 border-[var(--db-border)] hover:opacity-80 transition-opacity flex items-center gap-1 cursor-pointer truncate max-w-full">
                   /{link.slug} <ExternalLink className="h-3 w-3"/>
               </a>
-              {link.expiresAt && (
-                  <span className="text-[9px] md:text-[10px] bg-red-100 text-red-800 border-2 border-[var(--db-border)] px-1.5 md:px-2 py-0.5 flex items-center gap-1 font-bold whitespace-nowrap">
-                      <Clock className="h-3 w-3"/> Exp
-                  </span>
-              )}
+              {isMounted && getExpiryStatus()}
           </div>
           
           <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-[var(--db-text-muted)] font-mono bg-[var(--db-bg)] p-1.5 md:p-2 border border-[var(--db-border)] w-full">
               <span className="truncate flex-1 block text-[var(--db-text)]" title={link.targetUrl}>{domainLabel}</span>
               <span>•</span>
-              <span className="whitespace-nowrap">{new Date(link.createdAt).toLocaleDateString()}</span>
+              <span className="whitespace-nowrap">{isMounted ? new Date(link.createdAt).toLocaleDateString() : "..."}</span>
           </div>
       </div>
 

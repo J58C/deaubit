@@ -14,13 +14,16 @@ import { Trash2, X, ExternalLink } from "lucide-react";
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [userEmail, setUserEmail] = useState("User");
+  
   const [targetUrl, setTargetUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [password, setPassword] = useState(""); 
   const [expiresAt, setExpiresAt] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [selectedLink, setSelectedLink] = useState<ShortLink | null>(null);
   const [analyticsSlug, setAnalyticsSlug] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null); 
@@ -37,36 +40,72 @@ export default function DashboardPage() {
 
   async function fetchLinks() {
     setLoadingTable(true);
-    try { const res = await fetch("/api/links"); const data = await res.json(); setLinks(Array.isArray(data) ? data : []); } 
-    catch {} finally { setLoadingTable(false); }
+    try {
+      const res = await fetch("/api/links");
+      const data = await res.json();
+      setLinks(Array.isArray(data) ? data : []);
+    } catch {
+
+    } finally {
+      setLoadingTable(false);
+    }
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setLoading(true); setError(null);
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/links", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUrl, slug: slug || undefined, password: password || undefined, expiresAt: expiresAt || undefined }),
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetUrl,
+          slug: slug || undefined,
+          password: password || undefined,
+          expiresAt: expiresAt || undefined,
+        }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
+
       setTargetUrl(""); setSlug(""); setPassword(""); setExpiresAt("");
       await fetchLinks();
-    } catch (e) { setError(e instanceof Error ? e.message : "Error"); } finally { setLoading(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function confirmDelete() {
-    if (!pendingDelete) return; setDeleteLoading(true);
-    try { await fetch(`/api/links/${pendingDelete.slug}`, { method: "DELETE" }); setPendingDelete(null); await fetchLinks(); } 
-    finally { setDeleteLoading(false); }
+    if (!pendingDelete) return;
+    setDeleteLoading(true);
+    try {
+        await fetch(`/api/links/${pendingDelete.slug}`, { method: "DELETE" });
+        setPendingDelete(null);
+        await fetchLinks();
+    } finally {
+        setDeleteLoading(false);
+    }
   }
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const getDomainLabel = (url: string) => { try { return new URL(url).hostname; } catch { return url; } };
+  const shortHost = process.env.NEXT_PUBLIC_SHORT_HOST || process.env.NEXT_PUBLIC_APP_HOST;
+  const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "https";
+  
+  const baseUrl = shortHost 
+    ? `${protocol}://${shortHost}`
+    : (typeof window !== "undefined" ? window.location.origin : "");
+
+  const getDomainLabel = (url: string) => { 
+    try { return new URL(url).hostname; } catch { return url; } 
+  };
+  
   const copyToClipboard = (text: string) => navigator.clipboard.writeText(text).catch(() => {});
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8 pb-20">
+    <div className="w-full max-w-7xl mx-auto space-y-8 pb-32">
       
       <header className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-4 shadow-[8px_8px_0px_0px_var(--db-border)] flex items-center justify-between sticky top-4 z-30 transition-colors">
         <div className="flex items-center gap-3">
@@ -78,19 +117,35 @@ export default function DashboardPage() {
         <UserMenu username={userEmail} />
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
-        <div className="order-2 lg:order-1 h-full min-h-[500px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start relative">
+        
+        <div className="order-2 lg:order-1 min-w-0 space-y-6">
             <ExistingShortlinksCard
-              links={links} loadingTable={loadingTable} baseUrl={baseUrl} getDomainLabel={getDomainLabel}
-              onCopy={copyToClipboard} onDelete={(slug) => setPendingDelete(links.find(l => l.slug === slug) || null)}
-              onViewTarget={(link) => setSelectedLink(link)} onViewStats={(slug) => setAnalyticsSlug(slug)} onViewQr={(slug) => setQrSlug(slug)}
+              links={links}
+              loadingTable={loadingTable}
+              baseUrl={baseUrl}
+              getDomainLabel={getDomainLabel}
+              onCopy={copyToClipboard}
+              onDelete={(slug) => setPendingDelete(links.find(l => l.slug === slug) || null)}
+              onViewTarget={(link) => setSelectedLink(link)}
+              onViewStats={(slug) => setAnalyticsSlug(slug)}
+              onViewQr={(slug) => setQrSlug(slug)}
             />
         </div>
-        <div className="order-1 lg:order-2 lg:sticky lg:top-28">
+
+        <div className="order-1 lg:order-2 lg:sticky lg:top-30 h-fit z-10 transition-all duration-300">
             <CreateShortlinkCard
-              targetUrl={targetUrl} slug={slug} password={password} expiresAt={expiresAt}
-              loading={loading} error={error} onSubmit={handleCreate}
-              onChangeTarget={setTargetUrl} onChangeSlug={setSlug} onChangePassword={setPassword} onChangeExpiresAt={setExpiresAt}
+              targetUrl={targetUrl}
+              slug={slug}
+              password={password}
+              expiresAt={expiresAt}
+              loading={loading}
+              error={error}
+              onSubmit={handleCreate}
+              onChangeTarget={setTargetUrl}
+              onChangeSlug={setSlug}
+              onChangePassword={setPassword}
+              onChangeExpiresAt={setExpiresAt}
             />
         </div>
       </div>

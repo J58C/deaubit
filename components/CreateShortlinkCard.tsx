@@ -35,7 +35,7 @@ export function CreateShortlinkCard({
           <label className="text-xs font-black uppercase tracking-widest text-[var(--db-text-muted)]">Target URL</label>
           <input
             className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:bg-[var(--db-surface)] focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
-            placeholder="https://very-long-url.com/..."
+            placeholder="https://example.com"
             value={targetUrl}
             onChange={(e) => onChangeTarget(e.target.value)}
             required
@@ -49,7 +49,7 @@ export function CreateShortlinkCard({
             <span className="bg-[var(--db-text-muted)] text-[var(--db-bg)] px-3 py-3 text-sm font-mono font-bold flex items-center">/</span>
             <input
               className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] border-l-0 px-4 py-3 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:bg-[var(--db-surface)] focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
-              placeholder="my-link"
+              placeholder="link"
               value={slug}
               onChange={(e) => onChangeSlug(e.target.value)}
               disabled={loading}

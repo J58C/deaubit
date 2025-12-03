@@ -3,8 +3,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X } from "lucide-react";
+import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -74,6 +75,12 @@ export default function SettingsPage() {
     <div className="w-full space-y-10 pb-20">
       
       <div className="border-b-4 border-[var(--db-border)] pb-6">
+        <Link 
+          href="/dash" 
+          className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-[var(--db-surface)] border-2 border-[var(--db-border)] font-black text-xs uppercase tracking-widest text-[var(--db-text)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all"
+        >
+            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+        </Link>
         <h1 className="text-4xl font-black uppercase tracking-tighter text-[var(--db-text)]">Account Settings</h1>
         <p className="text-sm font-bold text-[var(--db-text-muted)] mt-2">Manage your identity & security preferences.</p>
       </div>

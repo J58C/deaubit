@@ -3,14 +3,14 @@
 :root {
   color-scheme: light;
 
-  --db-bg: #f0f9ff; 
+  --db-bg: #f0f9ff;
   --db-surface: #ffffff;
   --db-border: #000000;
   
-  --db-text: #000000;
-  --db-text-muted: #334155;
-
-  --db-primary: #2563eb;
+  --db-text: #0f172a;
+  --db-text-muted: #475569;
+  
+  --db-primary: #4f46e5;
   --db-primary-fg: #ffffff;
 
   --db-accent: #fbbf24;
@@ -18,18 +18,31 @@
   
   --db-danger: #ef4444;
   --db-success: #22c55e;
+
+  --db-pattern: rgba(0, 0, 0, 0.1); 
 }
 
 .dark {
   color-scheme: dark;
-  --db-bg: #0f172a; 
-  --db-surface: #1e293b;
-  --db-border: #ffffff; 
-  --db-text: #ffffff;
-  --db-text-muted: #cbd5e1;
-  --db-primary: #60a5fa;
+
+  --db-bg: #020617;
+  --db-surface: #0f172a;
+  
+  --db-border: #e2e8f0;
+
+  --db-text: #f8fafc;
+  --db-text-muted: #94a3b8;
+
+  --db-primary: #818cf8;
   --db-primary-fg: #000000;
+
   --db-accent: #fcd34d;
+  --db-accent-fg: #000000;
+
+  --db-danger: #f87171;
+  --db-success: #4ade80;
+
+  --db-pattern: rgba(255, 255, 255, 0.15);
 }
 
 body {
@@ -37,13 +50,9 @@ body {
   color: var(--db-text);
   font-family: ui-sans-serif, system-ui, sans-serif;
   
-  background-image: linear-gradient(var(--db-text-muted) 1px, transparent 1px),
-  linear-gradient(90deg, var(--db-text-muted) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: -1px -1px;
-  background-blend-mode: overlay;
-  opacity: 1;
-  
+  background-image: radial-gradient(var(--db-pattern) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: center;
   min-height: 100vh;
 }
 
@@ -51,8 +60,11 @@ button, a, input[type="submit"], [role="button"] {
   cursor: pointer !important;
 }
 
-::-webkit-scrollbar { width: 14px; }
-::-webkit-scrollbar-track { background: var(--db-bg); border-left: 2px solid var(--db-border); }
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { 
+  background: var(--db-bg); 
+  border-left: 2px solid var(--db-border); 
+}
 ::-webkit-scrollbar-thumb { 
   background: var(--db-primary); 
   border: 2px solid var(--db-border); 

@@ -13,8 +13,12 @@ export default function PublicShortlinkForm() {
     const [publicError, setPublicError] = useState<string | null>(null);
     const [publicResult, setPublicResult] = useState<ShortlinkResult | null>(null);
 
-    const publicBaseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "") ||
+    const shortBaseUrl = 
+        (process.env.NEXT_PUBLIC_SHORT_HOST || process.env.NEXT_PUBLIC_APP_HOST || "")
+        .replace(/\/+$/, "") || 
         (typeof window !== "undefined" ? window.location.origin.replace(/\/+$/, "") : "");
+    
+    const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "https";
 
     async function handlePublicSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -26,14 +30,25 @@ export default function PublicShortlinkForm() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ targetUrl: publicTarget }),
             });
+
             const data: PublicLinkResponse = await res.json().catch(() => ({} as PublicLinkResponse));
 
-            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Gagal.");
+            if (!res.ok) {
+                throw new Error(
+                    typeof data.error === "string"
+                        ? data.error
+                        : "Gagal membuat shortlink."
+                );
+            }
 
-            setPublicResult({ slug: data.slug, shortUrl: publicBaseUrl ? `${publicBaseUrl}/${data.slug}` : `/${data.slug}` });
+            const shortUrl = `${protocol}://${shortBaseUrl}/${data.slug}`;
+
+            setPublicResult({ slug: data.slug, shortUrl });
             setPublicTarget("");
         } catch (err) {
-            setPublicError(err instanceof Error ? err.message : "Gagal.");
+            const msg =
+                err instanceof Error ? err.message : "Gagal membuat shortlink.";
+            setPublicError(msg);
         } finally {
             setPublicLoading(false);
         }
@@ -80,7 +95,10 @@ export default function PublicShortlinkForm() {
             </div>
 
             {publicResult && (
-                <ShortlinkResultModal result={publicResult} onClose={() => setPublicResult(null)} />
+                <ShortlinkResultModal
+                    result={publicResult}
+                    onClose={() => setPublicResult(null)}
+                />
             )}
         </>
     );
