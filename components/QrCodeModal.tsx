@@ -9,22 +9,38 @@ interface QrCodeModalProps { slug: string; shortUrl: string; onClose: () => void
 
 export default function QrCodeModal({ slug, shortUrl, onClose }: QrCodeModalProps) {
   const [downloading, setDownloading] = useState(false);
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=5&data=${encodeURIComponent(shortUrl)}`;
+  const [imgLoaded, setImgLoaded] = useState(false);
+  
+  const previewQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=5&data=${encodeURIComponent(shortUrl)}`;
+
+  const downloadApiUrl = `/api/qr-download?url=${encodeURIComponent(shortUrl)}`;
 
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const response = await fetch(qrImageUrl);
+      const response = await fetch(downloadApiUrl);
       const blob = await response.blob();
+      
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a'); link.href = url; link.download = `qr-${slug}.png`;
-      document.body.appendChild(link); link.click(); document.body.removeChild(link); window.URL.revokeObjectURL(url);
-    } catch { alert("Gagal."); } finally { setDownloading(false); }
+      const link = document.createElement('a'); 
+      link.href = url; 
+      link.download = `deaubit-${slug}.png`;
+      
+      document.body.appendChild(link); 
+      link.click(); 
+      document.body.removeChild(link); 
+      window.URL.revokeObjectURL(url);
+    } catch { 
+      alert("Gagal mengunduh QR Code."); 
+    } finally { 
+      setDownloading(false); 
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
       <div className="relative w-full max-w-sm bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[12px_12px_0px_0px_var(--db-border)] p-6 space-y-6">
+        
         <div className="flex items-center justify-between border-b-4 border-[var(--db-border)] pb-4">
           <div>
             <h3 className="text-lg font-black uppercase flex items-center gap-2 text-[var(--db-text)]">
@@ -35,14 +51,33 @@ export default function QrCodeModal({ slug, shortUrl, onClose }: QrCodeModalProp
           <button onClick={onClose} className="border-2 border-[var(--db-border)] p-1 hover:bg-red-500 hover:text-white transition-colors"><X className="h-5 w-5"/></button>
         </div>
 
-        <div className="bg-white border-4 border-[var(--db-border)] p-2 flex items-center justify-center">
-          <img src={qrImageUrl} alt={`QR ${slug}`} className="w-full h-full object-contain" loading="eager" />
+        <div className="bg-white border-4 border-[var(--db-border)] p-2 flex items-center justify-center aspect-square relative min-h-[300px]">
+          
+          {!imgLoaded && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 z-10">
+               <Loader2 className="h-10 w-10 animate-spin text-black" />
+               <p className="text-[10px] font-black text-black uppercase animate-pulse tracking-widest">Generating...</p>
+            </div>
+          )}
+
+          <img 
+            src={previewQrUrl} 
+            alt={`QR ${slug}`} 
+            className={`w-full h-full object-contain transition-opacity duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`} 
+            onLoad={() => setImgLoaded(true)}
+            loading="eager" 
+          />
         </div>
         
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-3 font-bold border-2 border-[var(--db-border)] hover:bg-[var(--db-bg)] text-[var(--db-text)]">CLOSE</button>
-          <button onClick={handleDownload} disabled={downloading} className="flex-1 py-3 font-bold bg-[var(--db-primary)] text-white border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2">
-            {downloading ? <Loader2 className="h-4 w-4 animate-spin"/> : <><Download className="h-4 w-4"/> PNG</>}
+          
+          <button 
+            onClick={handleDownload} 
+            disabled={downloading || !imgLoaded} 
+            className="flex-1 py-3 font-bold bg-[var(--db-primary)] text-white border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {downloading ? <Loader2 className="h-4 w-4 animate-spin"/> : <><Download className="h-4 w-4"/> DOWNLOAD</>}
           </button>
         </div>
       </div>

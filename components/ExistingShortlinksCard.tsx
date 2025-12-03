@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { Copy, Trash2, QrCode, BarChart3, ExternalLink, Clock, AlertTriangle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Copy, Trash2, QrCode, BarChart3, ExternalLink, Clock, AlertTriangle, Check, Search, X } from "lucide-react";
 
 export interface ShortLink {
   id: string;
@@ -18,104 +18,196 @@ interface ExistingShortlinksCardProps {
   loadingTable: boolean;
   baseUrl: string;
   getDomainLabel: (url: string) => string;
-  onCopy: (url: string) => void;
-  onDelete: (slug: string) => void;
+  onDelete: (slugs: string[]) => void;
   onViewTarget: (link: ShortLink) => void;
   onViewStats: (slug: string) => void;
   onViewQr: (slug: string) => void;
 }
 
-function ShortlinkRow({ link, baseUrl, getDomainLabel, onViewStats, onViewQr, onCopy, onDelete }: any) {
-  const [isMounted, setIsMounted] = useState(false);
+function ShortlinkRow({ 
+  link, 
+  baseUrl, 
+  getDomainLabel, 
+  onViewStats, 
+  onViewQr, 
+  selected, 
+  onToggleSelect 
+}: any) {
+  const [copied, setCopied] = useState(false);
   const shortUrl = `${baseUrl}/${link.slug}`;
   const domainLabel = getDomainLabel(link.targetUrl);
 
-  useEffect(() => { setIsMounted(true); }, []);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(shortUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {});
+  };
 
   const getExpiryStatus = () => {
     if (!link.expiresAt) return null;
     const now = new Date();
     const expiry = new Date(link.expiresAt);
     const isExpired = now > expiry;
-    
-    const dateStr = expiry.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const dateStr = expiry.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' });
 
     if (isExpired) {
       return (
-        <span className="text-[10px] bg-red-100 text-red-800 border-2 border-[var(--db-border)] px-2 py-0.5 flex items-center gap-1 font-bold whitespace-nowrap">
-           <AlertTriangle className="h-3 w-3"/> EXPIRED
+        <span className="text-[9px] bg-red-100 text-red-800 border border-[var(--db-border)] px-1.5 py-0.5 flex items-center gap-1 font-bold">
+           <AlertTriangle className="h-3 w-3"/> EXP
         </span>
       );
     }
     return (
-      <span className="text-[10px] bg-orange-100 text-orange-800 border-2 border-[var(--db-border)] px-2 py-0.5 flex items-center gap-1 font-bold whitespace-nowrap" title={`Expires on ${expiry.toLocaleString()}`}>
+      <span className="text-[9px] bg-orange-100 text-orange-800 border border-[var(--db-border)] px-1.5 py-0.5 flex items-center gap-1 font-bold" title={expiry.toLocaleString()}>
          <Clock className="h-3 w-3"/> {dateStr}
       </span>
     );
   };
 
   return (
-    <div className="group relative bg-[var(--db-surface)] border-2 border-[var(--db-border)] p-3 md:p-4 shadow-[3px_3px_0px_0px_var(--db-border)] md:shadow-[4px_4px_0px_0px_var(--db-border)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_var(--db-border)] transition-all flex flex-col justify-between h-full">
+    <div className={`group relative bg-[var(--db-surface)] border-2 border-[var(--db-border)] p-2.5 lg:p-3 shadow-[3px_3px_0px_0px_var(--db-border)] transition-all flex flex-col justify-between h-full ${selected ? "ring-2 ring-[var(--db-primary)] ring-offset-1" : ""}`}>
       
-      <div className="min-w-0 mb-3">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-              <a href={shortUrl} target="_blank" className="bg-[var(--db-accent)] text-[var(--db-accent-fg)] text-xs md:text-sm font-black px-2 md:px-3 py-1 border-2 border-[var(--db-border)] hover:opacity-80 transition-opacity flex items-center gap-1 cursor-pointer truncate max-w-full">
+      <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+              <input 
+                type="checkbox" 
+                checked={selected} 
+                onChange={() => onToggleSelect(link.slug)}
+                className="w-3.5 h-3.5 accent-[var(--db-primary)] cursor-pointer"
+              />
+              <a href={shortUrl} target="_blank" className="truncate bg-[var(--db-accent)] text-[var(--db-accent-fg)] text-[10px] lg:text-xs font-black px-2 py-0.5 border border-[var(--db-border)] hover:opacity-80 flex items-center gap-1 cursor-pointer">
                   /{link.slug} <ExternalLink className="h-3 w-3"/>
               </a>
-              {isMounted && getExpiryStatus()}
           </div>
-          
-          <div className="flex items-center gap-2 text-[10px] md:text-xs font-bold text-[var(--db-text-muted)] font-mono bg-[var(--db-bg)] p-1.5 md:p-2 border border-[var(--db-border)] w-full">
+          {getExpiryStatus()}
+      </div>
+      
+      <div className="mb-3">
+          <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--db-text-muted)] font-mono bg-[var(--db-bg)] p-1.5 border border-[var(--db-border)] w-full">
               <span className="truncate flex-1 block text-[var(--db-text)]" title={link.targetUrl}>{domainLabel}</span>
-              <span>•</span>
-              <span className="whitespace-nowrap">{isMounted ? new Date(link.createdAt).toLocaleDateString() : "..."}</span>
           </div>
+          <span className="text-[9px] font-bold text-[var(--db-text-muted)] mt-1 block text-right">
+            {new Date(link.createdAt).toLocaleDateString()}
+          </span>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 pt-3 border-t-2 border-dashed border-[var(--db-border)] mt-auto">
-          <button onClick={() => onViewStats(link.slug)} className="p-1.5 border-2 border-[var(--db-border)] bg-blue-100 text-blue-900 hover:bg-blue-300 hover:-translate-y-1 transition-all cursor-pointer flex justify-center items-center" title="Stats">
-              <BarChart3 className="h-4 w-4" />
+      <div className="grid grid-cols-3 gap-2 pt-2 border-t-2 border-dashed border-[var(--db-border)] mt-auto">
+          <button onClick={() => onViewStats(link.slug)} className="py-1 border border-[var(--db-border)] bg-blue-50 text-blue-900 hover:bg-blue-200 transition-colors flex justify-center items-center" title="Stats">
+              <BarChart3 className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onViewQr(link.slug)} className="p-1.5 border-2 border-[var(--db-border)] bg-yellow-100 text-yellow-900 hover:bg-yellow-300 hover:-translate-y-1 transition-all cursor-pointer flex justify-center items-center" title="QR">
-              <QrCode className="h-4 w-4" />
+          <button onClick={() => onViewQr(link.slug)} className="py-1 border border-[var(--db-border)] bg-yellow-50 text-yellow-900 hover:bg-yellow-200 transition-colors flex justify-center items-center" title="QR">
+              <QrCode className="h-3.5 w-3.5" />
           </button>
-          <button onClick={() => onCopy(shortUrl)} className="p-1.5 border-2 border-[var(--db-border)] bg-green-100 text-green-900 hover:bg-green-300 hover:-translate-y-1 transition-all cursor-pointer flex justify-center items-center" title="Copy">
-              <Copy className="h-4 w-4" />
-          </button>
-          <button onClick={() => onDelete(link.slug)} className="p-1.5 border-2 border-[var(--db-border)] bg-red-100 text-red-900 hover:bg-red-300 hover:-translate-y-1 transition-all cursor-pointer flex justify-center items-center" title="Delete">
-              <Trash2 className="h-4 w-4" />
+          <button onClick={handleCopy} className={`py-1 border border-[var(--db-border)] transition-all flex justify-center items-center gap-1 font-bold text-[10px] ${copied ? "bg-green-500 text-white border-green-700" : "bg-green-50 text-green-900 hover:bg-green-200"}`}>
+              {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied && "OK"}
           </button>
       </div>
     </div>
   );
 }
 
-export function ExistingShortlinksCard({ links, loadingTable, baseUrl, getDomainLabel, onCopy, onDelete, onViewStats, onViewQr }: ExistingShortlinksCardProps) {
+export function ExistingShortlinksCard({ links, loadingTable, baseUrl, getDomainLabel, onDelete, onViewStats, onViewQr }: ExistingShortlinksCardProps) {
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const filteredLinks = useMemo(() => {
+    if (!search) return links;
+    return links.filter(l => 
+        l.slug.toLowerCase().includes(search.toLowerCase()) || 
+        l.targetUrl.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [links, search]);
+
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredLinks.length && filteredLinks.length > 0) {
+        setSelectedIds(new Set());
+    } else {
+        setSelectedIds(new Set(filteredLinks.map(l => l.slug)));
+    }
+  };
+
+  const toggleSelection = (slug: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(slug)) next.delete(slug);
+    else next.add(slug);
+    setSelectedIds(next);
+  };
+
+  const handleBulkDelete = () => {
+    onDelete(Array.from(selectedIds));
+    setSelectedIds(new Set());
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-4 md:mb-6 flex items-center justify-between border-b-4 border-[var(--db-border)] pb-2 md:pb-4">
-        <h2 className="text-xl md:text-3xl font-black uppercase tracking-tighter text-[var(--db-text)]">Active Links</h2>
-        <span className="bg-[var(--db-text)] text-[var(--db-bg)] px-3 md:px-4 py-1 font-mono font-bold text-sm md:text-lg border-2 border-[var(--db-bg)] shadow-[2px_2px_0px_0px_var(--db-text-muted)]">{links.length}</span>
+    <div className="h-full flex flex-col relative">
+      
+      <div className="mb-4 flex flex-col gap-3 border-b-4 border-[var(--db-border)] pb-3">
+        <div className="flex items-center justify-between">
+            <h2 className="text-lg lg:text-xl font-black uppercase tracking-tighter text-[var(--db-text)]">
+                Active Links <span className="text-[var(--db-text-muted)] text-sm lg:text-lg">({filteredLinks.length})</span>
+            </h2>
+        </div>
+
+        <div className="flex gap-2">
+            <div className="relative flex-1">
+                <input 
+                    className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] pl-8 pr-4 py-1.5 text-xs lg:text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
+                    placeholder="Search..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+                <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-[var(--db-text-muted)]" />
+                {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-2.5 top-2 hover:text-red-500">
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                )}
+            </div>
+            
+            {selectedIds.size > 0 && (
+                <button 
+                    onClick={handleBulkDelete}
+                    className="bg-red-500 text-white border-2 border-[var(--db-border)] px-3 font-black uppercase text-[10px] flex items-center gap-1 hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all"
+                >
+                    <Trash2 className="h-3.5 w-3.5"/> DEL ({selectedIds.size})
+                </button>
+            )}
+        </div>
+
+        <div className="flex items-center gap-2 text-[10px] font-bold text-[var(--db-text)]">
+            <input 
+                type="checkbox" 
+                className="w-3.5 h-3.5 accent-[var(--db-primary)] cursor-pointer"
+                checked={filteredLinks.length > 0 && selectedIds.size === filteredLinks.length}
+                onChange={handleSelectAll}
+                disabled={filteredLinks.length === 0}
+            />
+            <span>SELECT ALL</span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pr-1 md:pr-2 pb-10">
         {loadingTable ? (
-            <div className="text-center p-10 font-bold animate-pulse text-[var(--db-text-muted)]">LOADING DATA...</div>
-        ) : links.length === 0 ? (
-            <div className="border-4 border-[var(--db-border)] border-dashed p-8 md:p-12 text-center bg-[var(--db-surface)]">
-                <p className="font-black text-lg md:text-xl mb-2 text-[var(--db-text)]">ZONK! NO LINKS.</p>
-                <p className="text-xs md:text-sm font-medium text-[var(--db-text-muted)]">Create your first link on the panel.</p>
+            <div className="text-center p-10 font-bold animate-pulse text-[var(--db-text-muted)] text-xs">LOADING DATA...</div>
+        ) : filteredLinks.length === 0 ? (
+            <div className="border-4 border-[var(--db-border)] border-dashed p-8 text-center bg-[var(--db-surface)]">
+                <p className="font-black text-sm lg:text-lg mb-1 text-[var(--db-text)]">NO LINKS FOUND.</p>
+                <p className="text-[10px] lg:text-xs font-medium text-[var(--db-text-muted)]">Try adjusting search.</p>
             </div>
         ) : (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {links.map((link) => (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 lg:gap-4">
+                {filteredLinks.map((link) => (
                   <ShortlinkRow 
                     key={link.id} 
                     link={link} 
                     baseUrl={baseUrl} 
                     getDomainLabel={getDomainLabel} 
-                    onCopy={onCopy} onDelete={onDelete} 
-                    onViewStats={onViewStats} onViewQr={onViewQr} 
+                    onViewStats={onViewStats} 
+                    onViewQr={onViewQr} 
+                    selected={selectedIds.has(link.slug)}
+                    onToggleSelect={toggleSelection}
                   />
                 ))}
             </div>

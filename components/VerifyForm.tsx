@@ -48,12 +48,14 @@ function VerifyContent() {
 
   if (success) {
     return (
-      <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] text-center animate-in zoom-in-95 duration-300">
-         <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full mb-6 shadow-[4px_4px_0px_0px_var(--db-border)]">
+      <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] text-center animate-in zoom-in-95 duration-300 w-full max-w-md">
+         <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full mb-6 shadow-[4px_4px_0px_0px_var(--db-border)] animate-bounce">
              <CheckCircle2 className="h-12 w-12 text-white" />
          </div>
          <h2 className="text-3xl font-black uppercase text-[var(--db-text)] mb-2">ACCOUNT VERIFIED!</h2>
-         <p className="text-sm font-bold text-[var(--db-text-muted)] mb-8">You can now access your dashboard.</p>
+         <p className="text-sm font-bold text-[var(--db-text-muted)] mb-8">
+            Your account has been successfully created. You can now login to your dashboard.
+         </p>
          
          <button 
             onClick={() => router.push("/")}
@@ -66,7 +68,7 @@ function VerifyContent() {
   }
 
   return (
-    <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] text-center">
+    <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] text-center w-full max-w-md">
       <div className="inline-block p-3 bg-[var(--db-accent)] border-2 border-[var(--db-border)] rounded-full mb-4">
           <ShieldCheck className="h-8 w-8 text-[var(--db-accent-fg)]"/>
       </div>

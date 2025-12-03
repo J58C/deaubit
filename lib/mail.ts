@@ -42,7 +42,7 @@ function getEmailTemplate(title: string, bodyContent: string) {
         </div>
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} DeauBit URL Shortener. All rights reserved.</p>
-          <p>This email was sent automatically. Please do not reply.</p>
+          <p>Email ini dikirim secara otomatis. Mohon jangan dibalas.</p>
         </div>
       </div>
     </body>
@@ -58,11 +58,8 @@ export async function sendVerificationEmail(email: string, otp: string) {
   const htmlContent = `
     <p>Halo,</p>
     <p>Terima kasih telah mendaftar di DeauBit. Untuk mengamankan akun Anda, silakan masukkan kode verifikasi berikut:</p>
-    
     <div class="otp-box">${otp}</div>
-    
-    <p class="text-muted">Kode ini hanya berlaku selama <strong>15 menit</strong>. Jangan berikan kode ini kepada siapa pun, termasuk pihak DeauBit.</p>
-    <p>Jika Anda tidak merasa mendaftar, abaikan email ini.</p>
+    <p class="text-muted">Kode ini hanya berlaku selama <strong>15 menit</strong>. Jangan berikan kode ini kepada siapa pun.</p>
   `;
 
   return await transporter.sendMail({
@@ -81,17 +78,10 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const htmlContent = `
     <p>Halo,</p>
     <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun DeauBit Anda.</p>
-    <p>Klik tombol di bawah ini untuk membuat kata sandi baru:</p>
-    
     <div style="text-align: center; margin: 30px 0;">
       <a href="${resetLink}" class="btn">Reset Password Saya</a>
     </div>
-    
     <p class="text-muted">Tautan ini akan kadaluarsa dalam <strong>1 jam</strong>.</p>
-    <p class="text-muted" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
-      Jika tombol di atas tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:<br>
-      <a href="${resetLink}" style="color: #4f46e5; word-break: break-all;">${resetLink}</a>
-    </p>
   `;
 
   return await transporter.sendMail({
@@ -99,5 +89,47 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     to: email,
     subject: "Permintaan Reset Password - DeauBit",
     html: getEmailTemplate("Reset Password", htmlContent),
+  });
+}
+
+
+export async function sendWelcomeEmail(email: string, name: string) {
+  const appHost = process.env.NEXT_PUBLIC_APP_HOST || "localhost:3000";
+  const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "http";
+  const loginLink = `${protocol}://${appHost}/login`;
+
+  const htmlContent = `
+    <p>Halo <strong>${name}</strong>,</p>
+    <p>Selamat! Akun DeauBit Anda telah berhasil diverifikasi dan aktif.</p>
+    <p>Sekarang Anda memiliki akses penuh untuk membuat shortlink, mengelola tautan, dan memantau analitik pengunjung.</p>
+    
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${loginLink}" class="btn">Masuk ke Dashboard</a>
+    </div>
+    
+    <p>Terima kasih telah bergabung dengan kami!</p>
+  `;
+
+  return await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Selamat Datang di DeauBit! 🎉",
+    html: getEmailTemplate("Akun Berhasil Dibuat", htmlContent),
+  });
+}
+
+export async function sendAccountDeletedEmail(email: string, name: string) {
+  const htmlContent = `
+    <p>Halo ${name},</p>
+    <p>Ini adalah email konfirmasi bahwa akun DeauBit Anda beserta seluruh datanya telah <strong>dihapus secara permanen</strong> sesuai permintaan Anda.</p>
+    <p>Kami sedih melihat Anda pergi. Jika di masa depan Anda membutuhkan layanan kami lagi, kami akan dengan senang hati menyambut Anda kembali.</p>
+    <p class="text-muted" style="margin-top: 20px;">Anda tidak perlu melakukan tindakan apa pun.</p>
+  `;
+
+  return await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: email,
+    subject: "Konfirmasi Penghapusan Akun - DeauBit",
+    html: getEmailTemplate("Sampai Jumpa 👋", htmlContent),
   });
 }

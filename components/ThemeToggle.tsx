@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { Moon, SunMedium } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Moon, SunMedium, Loader2 } from "lucide-react";
 
 type Theme = "light" | "dark";
 
@@ -43,15 +43,16 @@ function writeThemeCookie(theme: Theme) {
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme | null>(() => {
-    if (typeof document === "undefined") return null;
+  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    setMounted(true);
     const isDark = document.documentElement.classList.contains("dark");
-    return isDark ? "dark" : "light";
-  });
+    setTheme(isDark ? "dark" : "light");
+  }, []);
 
   function setThemeEverywhere(newTheme: Theme) {
-    if (typeof document === "undefined") return;
-
     const html = document.documentElement;
 
     if (newTheme === "dark") {
@@ -69,37 +70,44 @@ export default function ThemeToggle() {
   }
 
   function toggleTheme() {
-    if (theme === null) return;
     const next: Theme = theme === "dark" ? "light" : "dark";
     setThemeEverywhere(next);
   }
 
+  if (!mounted) {
+    return (
+      <div className="fixed right-4 bottom-4 z-50 p-3 bg-white border-2 border-black shadow-[4px_4px_0px_0px_black]">
+         <Loader2 className="h-6 w-6 animate-spin text-black" />
+      </div>
+    );
+  }
+
   const isDark = theme === "dark";
-  const label = theme === null ? "…" : isDark ? "DARK" : "LIGHT";
 
   return (
     <button
       type="button"
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      disabled={theme === null}
       className={`
         fixed right-4 bottom-4 z-50 
-        flex items-center gap-2 
-        bg-white border-2 border-black px-3 py-2 
+        flex items-center justify-center
+        p-3
+        bg-white border-2 border-black 
         shadow-[4px_4px_0px_0px_black] 
         hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_black] 
         active:translate-y-0 active:shadow-[2px_2px_0px_0px_black]
         transition-all 
-        disabled:opacity-50 disabled:cursor-not-allowed
+        cursor-pointer
       `}
     >
-      <div className={`p-1.5 border-2 border-black ${isDark ? 'bg-black text-white' : 'bg-yellow-300 text-black'}`}>
-        {isDark ? <Moon className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}
+      <div className="text-black">
+        {isDark ? (
+            <Moon className="h-6 w-6 fill-current" />
+        ) : (
+            <SunMedium className="h-6 w-6 fill-yellow-400 text-black" />
+        )}
       </div>
-      <span className="font-black text-xs uppercase hidden sm:inline text-black">
-        {label} MODE
-      </span>
     </button>
   );
 }

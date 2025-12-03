@@ -3,19 +3,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X, ArrowLeft } from "lucide-react";
+import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X, ArrowLeft, Check, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function SettingsPage() {
   const router = useRouter();
   
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [name, setName] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
+  const [isProfileExpanded, setIsProfileExpanded] = useState(true);
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState(""); 
+  const [showNewPassword, setShowNewPassword] = useState(false); 
+  const [loadingSecurity, setLoadingSecurity] = useState(false);
+  const [securityMessage, setSecurityMessage] = useState("");
+  const [securityError, setSecurityError] = useState("");
+  const [isSecurityExpanded, setIsSecurityExpanded] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
@@ -30,23 +38,58 @@ export default function SettingsPage() {
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setMessage(""); setError("");
+    setLoadingProfile(true); setProfileMessage(""); setProfileError("");
+
     try {
       const res = await fetch("/api/auth/update-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, oldPassword, newPassword }),
+        body: JSON.stringify({ name }),
       });
       
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal update");
       
-      setMessage("PROFILE UPDATED SUCCESSFULLY");
-      setOldPassword(""); setNewPassword("");
+      setProfileMessage("NAME UPDATED");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal");
+      setProfileError(err instanceof Error ? err.message : "Gagal");
     } finally {
-      setLoading(false);
+      setLoadingProfile(false);
+    }
+  }
+
+  async function handleUpdateSecurity(e: React.FormEvent) {
+    e.preventDefault();
+    setLoadingSecurity(true); setSecurityMessage(""); setSecurityError("");
+
+    if (!newPassword || !oldPassword) {
+        setSecurityError("Mohon isi semua kolom password.");
+        setLoadingSecurity(false);
+        return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        setSecurityError("Password baru tidak cocok.");
+        setLoadingSecurity(false);
+        return;
+    }
+
+    try {
+      const res = await fetch("/api/auth/update-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oldPassword, newPassword }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal update");
+      
+      setSecurityMessage("PASSWORD UPDATED");
+      setOldPassword(""); setNewPassword(""); setConfirmNewPassword("");
+    } catch (err) {
+      setSecurityError(err instanceof Error ? err.message : "Gagal");
+    } finally {
+      setLoadingSecurity(false);
     }
   }
 
@@ -64,7 +107,7 @@ export default function SettingsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal menghapus akun");
 
-      window.location.href = "/";
+      window.location.href = "/account-deleted"; 
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : "Gagal");
       setDeleteLoading(false);
@@ -72,142 +115,196 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full space-y-10 pb-20">
+    <div className="w-full max-w-4xl space-y-8 pb-20"> 
       
-      <div className="border-b-4 border-[var(--db-border)] pb-6">
+      <div className="border-b-4 border-[var(--db-border)] pb-4 lg:pb-6">
         <Link 
           href="/dash" 
-          className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-[var(--db-surface)] border-2 border-[var(--db-border)] font-black text-xs uppercase tracking-widest text-[var(--db-text)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all"
+          className="inline-flex items-center gap-2 mb-4 lg:mb-6 px-3 py-1.5 bg-[var(--db-surface)] border-2 border-[var(--db-border)] font-black text-[10px] lg:text-xs uppercase tracking-widest text-[var(--db-text)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all"
         >
-            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard
         </Link>
-        <h1 className="text-4xl font-black uppercase tracking-tighter text-[var(--db-text)]">Account Settings</h1>
-        <p className="text-sm font-bold text-[var(--db-text-muted)] mt-2">Manage your identity & security preferences.</p>
+        <h1 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter text-[var(--db-text)]">Account Settings</h1>
+        <p className="text-xs lg:text-sm font-bold text-[var(--db-text-muted)] mt-1">Manage your identity & security preferences.</p>
       </div>
 
-      <form onSubmit={handleUpdateProfile} className="space-y-12">
+      <div className="space-y-6">
         
-        <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <div className="bg-[var(--db-accent)] p-2 border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)]">
-                    <User className="h-6 w-6 text-[var(--db-accent-fg)]" />
-                </div>
-                <h2 className="text-2xl font-black uppercase text-[var(--db-text)]">Basic Profile</h2>
-            </div>
-            
-            <div className="pl-0 md:pl-[3.5rem]">
-                <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text-muted)] tracking-wider">Display Name</label>
-                <input 
-                    className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal"
-                    placeholder="Your Cool Name" 
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                />
-            </div>
-        </div>
-
-        <div className="space-y-6">
-            <div className="flex items-center gap-3">
-                <div className="bg-[var(--db-primary)] p-2 border-2 border-[var(--db-border)] text-[var(--db-primary-fg)] shadow-[4px_4px_0px_0px_var(--db-border)]">
-                    <Shield className="h-6 w-6" />
-                </div>
-                <h2 className="text-2xl font-black uppercase text-[var(--db-text)]">Security</h2>
-            </div>
-
-            <div className="pl-0 md:pl-[3.5rem] grid gap-8 md:grid-cols-2">
-                <div>
-                    <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text-muted)] tracking-wider">Current Password</label>
-                    <div className="relative">
-                        <input 
-                            type="password" 
-                            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal"
-                            placeholder="••••••••" 
-                            value={oldPassword}
-                            onChange={e => setOldPassword(e.target.value)}
-                        />
-                        <Lock className="absolute left-4 top-4 h-5 w-5 text-[var(--db-text-muted)]" />
+        <div className="bg-[var(--db-surface)] border-2 lg:border-4 border-[var(--db-border)] shadow-[6px_6px_0px_0px_var(--db-border)] transition-all">
+            <button 
+                onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                className="w-full flex items-center justify-between p-4 lg:p-5 hover:bg-[var(--db-bg)] transition-colors focus:outline-none"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="bg-[var(--db-accent)] p-2 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)]">
+                        <User className="h-5 w-5 lg:h-6 lg:w-6 text-[var(--db-accent-fg)]" />
+                    </div>
+                    <div className="text-left">
+                        <h2 className="text-lg lg:text-xl font-black uppercase text-[var(--db-text)] leading-none">Basic Profile</h2>
+                        <p className="text-[10px] font-bold text-[var(--db-text-muted)] mt-1">Change your display name</p>
                     </div>
                 </div>
-                <div>
-                    <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text-muted)] tracking-wider">New Password</label>
-                    <div className="relative">
-                        <input 
-                            type="password" 
-                            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal"
-                            placeholder="Min. 6 chars" 
-                            value={newPassword}
-                            onChange={e => setNewPassword(e.target.value)}
-                        />
-                        <Lock className="absolute left-4 top-4 h-5 w-5 text-[var(--db-text-muted)]" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div className="pl-0 md:pl-[3.5rem] pt-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex-1 w-full">
-                {message && (
-                    <div className="p-3 bg-[var(--db-success)] border-2 border-[var(--db-border)] text-white font-bold text-sm text-center uppercase shadow-[4px_4px_0px_0px_var(--db-border)]">
-                        {message}
-                    </div>
-                )}
-                {error && (
-                    <div className="p-3 bg-[var(--db-danger)] border-2 border-[var(--db-border)] text-white font-bold text-sm text-center uppercase shadow-[4px_4px_0px_0px_var(--db-border)]">
-                        ❌ {error}
-                    </div>
-                )}
-            </div>
-
-            <button type="submit" disabled={loading} className="w-full md:w-auto bg-[var(--db-text)] text-[var(--db-bg)] py-4 px-10 border-2 border-[var(--db-border)] font-black uppercase tracking-widest shadow-[6px_6px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_var(--db-border)] transition-all flex items-center justify-center gap-3 disabled:opacity-50">
-                {loading ? <Loader2 className="h-5 w-5 animate-spin"/> : <><Save className="h-5 w-5"/> SAVE CHANGES</>}
+                {isProfileExpanded ? <ChevronUp className="h-6 w-6 text-[var(--db-text)]"/> : <ChevronDown className="h-6 w-6 text-[var(--db-text)]"/>}
             </button>
-        </div>
-      </form>
 
-      <div className="mt-20 border-t-4 border-[var(--db-border)] border-dashed pt-10">
-        <div className="flex items-center gap-3 mb-6">
-            <div className="bg-[var(--db-danger)] p-2 border-2 border-[var(--db-border)] text-white shadow-[4px_4px_0px_0px_var(--db-border)]">
-                <AlertTriangle className="h-6 w-6" />
+            {isProfileExpanded && (
+                <div className="p-4 lg:p-6 border-t-2 lg:border-t-4 border-[var(--db-border)] animate-in slide-in-from-top-2">
+                    <form onSubmit={handleUpdateProfile} className="space-y-4">
+                        <div>
+                            <label className="font-black text-xs uppercase mb-1.5 block text-[var(--db-text-muted)] tracking-wider">Display Name</label>
+                            <input 
+                                className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-3 lg:p-4 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal text-sm"
+                                placeholder="Your Name" 
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+                            <div className="flex-1 w-full text-left">
+                                {profileMessage && <div className="p-2 bg-[var(--db-success)] border-2 border-[var(--db-border)] text-white font-bold text-xs text-center uppercase shadow-[2px_2px_0px_0px_var(--db-border)]">{profileMessage}</div>}
+                                {profileError && <div className="p-2 bg-[var(--db-danger)] border-2 border-[var(--db-border)] text-white font-bold text-xs text-center uppercase shadow-[2px_2px_0px_0px_var(--db-border)]">{profileError}</div>}
+                            </div>
+                            <button type="submit" disabled={loadingProfile} className="w-full md:w-auto bg-[var(--db-text)] text-[var(--db-bg)] py-3 px-6 border-2 border-[var(--db-border)] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_var(--db-border)] transition-all flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                                {loadingProfile ? <Loader2 className="h-4 w-4 animate-spin"/> : <><Save className="h-4 w-4"/> SAVE PROFILE</>}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+        </div>
+
+        <div className="bg-[var(--db-surface)] border-2 lg:border-4 border-[var(--db-border)] shadow-[6px_6px_0px_0px_var(--db-border)] transition-all">
+            <button 
+                onClick={() => setIsSecurityExpanded(!isSecurityExpanded)}
+                className="w-full flex items-center justify-between p-4 lg:p-5 hover:bg-[var(--db-bg)] transition-colors focus:outline-none"
+            >
+                <div className="flex items-center gap-3">
+                    <div className="bg-[var(--db-primary)] p-2 border-2 border-[var(--db-border)] text-[var(--db-primary-fg)] shadow-[2px_2px_0px_0px_var(--db-border)]">
+                        <Shield className="h-5 w-5 lg:h-6 lg:w-6" />
+                    </div>
+                    <div className="text-left">
+                        <h2 className="text-lg lg:text-xl font-black uppercase text-[var(--db-text)] leading-none">Security</h2>
+                        <p className="text-[10px] font-bold text-[var(--db-text-muted)] mt-1">Update your password</p>
+                    </div>
+                </div>
+                {isSecurityExpanded ? <ChevronUp className="h-6 w-6 text-[var(--db-text)]"/> : <ChevronDown className="h-6 w-6 text-[var(--db-text)]"/>}
+            </button>
+
+            {isSecurityExpanded && (
+                <div className="p-4 lg:p-6 border-t-2 lg:border-t-4 border-[var(--db-border)] animate-in slide-in-from-top-2">
+                    <form onSubmit={handleUpdateSecurity} className="space-y-4 lg:space-y-6">
+                        
+                        <div>
+                            <label className="font-black text-xs uppercase mb-1.5 block text-[var(--db-text-muted)] tracking-wider">Current Password</label>
+                            <div className="relative">
+                                <input 
+                                    type="password" 
+                                    className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-3 pl-10 lg:p-4 lg:pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal text-sm"
+                                    placeholder="••••••••" 
+                                    value={oldPassword}
+                                    onChange={e => setOldPassword(e.target.value)}
+                                />
+                                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-[var(--db-text-muted)]" />
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label className="font-black text-xs uppercase mb-1.5 block text-[var(--db-text-muted)] tracking-wider">New Password</label>
+                                <div className="relative">
+                                    <input 
+                                        type={showNewPassword ? "text" : "password"}
+                                        className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-3 pl-10 pr-10 lg:p-4 lg:pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal text-sm"
+                                        placeholder="Min. 6 chars" 
+                                        value={newPassword}
+                                        onChange={e => setNewPassword(e.target.value)}
+                                    />
+                                    <Lock className="absolute left-3.5 top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-[var(--db-text-muted)]" />
+                                    <button type="button" onClick={() => setShowNewPassword(!showNewPassword)} className="absolute right-3.5 top-3.5 text-[var(--db-text-muted)] hover:text-[var(--db-text)]">
+                                        {showNewPassword ? <EyeOff className="h-4 w-4 lg:h-5 lg:w-5" /> : <Eye className="h-4 w-4 lg:h-5 lg:w-5" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="font-black text-xs uppercase mb-1.5 block text-[var(--db-text-muted)] tracking-wider">Confirm Password</label>
+                                <div className="relative">
+                                    <input 
+                                        type="password" 
+                                        className={`w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-3 pl-10 lg:p-4 lg:pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] placeholder:font-normal text-sm ${confirmNewPassword && newPassword !== confirmNewPassword ? "border-red-500" : ""}`}
+                                        placeholder="Retype password" 
+                                        value={confirmNewPassword}
+                                        onChange={e => setConfirmNewPassword(e.target.value)}
+                                    />
+                                    <Lock className="absolute left-3.5 top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-[var(--db-text-muted)]" />
+                                    {confirmNewPassword && newPassword === confirmNewPassword && (
+                                        <Check className="absolute right-3.5 top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-green-500" />
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-2">
+                            <div className="flex-1 w-full text-left">
+                                {securityMessage && <div className="p-2 bg-[var(--db-success)] border-2 border-[var(--db-border)] text-white font-bold text-xs text-center uppercase shadow-[2px_2px_0px_0px_var(--db-border)]">{securityMessage}</div>}
+                                {securityError && <div className="p-2 bg-[var(--db-danger)] border-2 border-[var(--db-border)] text-white font-bold text-xs text-center uppercase shadow-[2px_2px_0px_0px_var(--db-border)]">{securityError}</div>}
+                            </div>
+                            <button type="submit" disabled={loadingSecurity} className="w-full md:w-auto bg-[var(--db-text)] text-[var(--db-bg)] py-3 px-6 border-2 border-[var(--db-border)] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_var(--db-border)] transition-all flex items-center justify-center gap-2 text-xs disabled:opacity-50">
+                                {loadingSecurity ? <Loader2 className="h-4 w-4 animate-spin"/> : <><Save className="h-4 w-4"/> UPDATE PASSWORD</>}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+        </div>
+
+      </div>
+
+      <div className="mt-12 lg:mt-20 border-t-4 border-[var(--db-border)] border-dashed pt-8 lg:pt-10">
+        <div className="flex items-center gap-3 mb-4 lg:mb-6">
+            <div className="bg-[var(--db-danger)] p-1.5 lg:p-2 border-2 border-[var(--db-border)] text-white shadow-[4px_4px_0px_0px_var(--db-border)]">
+                <AlertTriangle className="h-5 w-5 lg:h-6 lg:w-6" />
             </div>
-            <h2 className="text-2xl font-black uppercase text-[var(--db-danger)]">Danger Zone</h2>
+            <h2 className="text-xl lg:text-2xl font-black uppercase text-[var(--db-danger)]">Danger Zone</h2>
         </div>
 
-        <div className="ml-0 md:ml-[3.5rem] border-4 border-[var(--db-danger)] bg-red-50 p-6 shadow-[8px_8px_0px_0px_var(--db-danger)]">
-            <h3 className="text-lg font-black uppercase text-red-900 mb-2">DELETE ACCOUNT PERMANENTLY</h3>
-            <p className="text-sm font-bold text-red-800 mb-6">
-                Once you delete your account, there is no going back. All your shortlinks, analytics data, and settings will be permanently removed. Please be certain.
+        <div className="ml-0 border-4 border-[var(--db-danger)] bg-[var(--db-surface)] p-4 lg:p-6 shadow-[8px_8px_0px_0px_var(--db-danger)]">
+            <h3 className="text-base lg:text-lg font-black uppercase text-[var(--db-danger)] mb-2">DELETE ACCOUNT PERMANENTLY</h3>
+            <p className="text-xs lg:text-sm font-bold text-[var(--db-text)] mb-6">
+                Once you delete your account, there is no going back. All your shortlinks, analytics data, and settings will be permanently removed.
             </p>
             <button 
                 onClick={() => setShowDeleteModal(true)}
-                className="bg-[var(--db-danger)] text-white font-black uppercase py-3 px-6 border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all flex items-center gap-2"
+                className="bg-[var(--db-danger)] text-white font-black uppercase py-2.5 lg:py-3 px-6 border-2 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all flex items-center gap-2 text-xs lg:text-sm"
             >
-                <Trash2 className="h-5 w-5" /> DELETE MY ACCOUNT
+                <Trash2 className="h-4 w-4 lg:h-5 lg:w-5" /> DELETE MY ACCOUNT
             </button>
         </div>
       </div>
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in">
-           <div className="w-full max-w-md bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[12px_12px_0px_0px_var(--db-danger)] relative">
+           <div className="w-full max-w-sm bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[12px_12px_0px_0px_var(--db-danger)] relative">
               <button 
                  onClick={() => setShowDeleteModal(false)} 
-                 className="absolute top-4 right-4 border-2 border-[var(--db-border)] p-1 hover:bg-[var(--db-bg)] text-[var(--db-text)]"
+                 className="absolute top-3 right-3 border-2 border-[var(--db-border)] p-1 hover:bg-[var(--db-bg)] text-[var(--db-text)]"
               >
-                 <X className="h-6 w-6" />
+                 <X className="h-5 w-5" />
               </button>
 
-              <div className="text-center mb-8">
-                 <div className="inline-block p-4 bg-[var(--db-danger)] border-4 border-[var(--db-border)] rounded-full mb-4 text-white shadow-[4px_4px_0px_0px_var(--db-border)]">
-                    <Trash2 className="h-8 w-8" />
+              <div className="text-center mb-6">
+                 <div className="inline-block p-3 bg-[var(--db-danger)] border-4 border-[var(--db-border)] rounded-full mb-3 text-white shadow-[4px_4px_0px_0px_var(--db-border)]">
+                    <Trash2 className="h-6 w-6" />
                  </div>
-                 <h2 className="text-3xl font-black uppercase leading-none text-[var(--db-text)] mb-2">FINAL WARNING</h2>
-                 <p className="font-bold text-[var(--db-text-muted)] text-sm">Enter your password to confirm deletion.</p>
+                 <h2 className="text-2xl font-black uppercase leading-none text-[var(--db-text)] mb-2">FINAL WARNING</h2>
+                 <p className="font-bold text-[var(--db-text-muted)] text-xs">Enter your password to confirm deletion.</p>
               </div>
 
               <form onSubmit={handleDeleteAccount} className="space-y-4">
                  <input 
                     type="password" 
-                    className="w-full bg-[var(--db-bg)] border-4 border-[var(--db-border)] p-4 font-bold text-center text-lg text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]"
+                    className="w-full bg-[var(--db-bg)] border-4 border-[var(--db-border)] p-3 font-bold text-center text-base text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]"
                     placeholder="YOUR PASSWORD" 
                     value={deletePassword}
                     onChange={(e) => setDeletePassword(e.target.value)}
@@ -216,25 +313,25 @@ export default function SettingsPage() {
                  />
 
                  {deleteError && (
-                    <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] text-center uppercase text-sm">
+                    <div className="bg-[var(--db-danger)] text-white font-bold p-2 border-2 border-[var(--db-border)] text-center uppercase text-xs">
                        {deleteError}
                     </div>
                  )}
 
-                 <div className="flex gap-3 pt-4">
+                 <div className="flex gap-2 pt-2">
                     <button 
                        type="button"
                        onClick={() => setShowDeleteModal(false)}
-                       className="flex-1 py-4 font-black border-4 border-[var(--db-border)] text-[var(--db-text)] hover:bg-[var(--db-bg)] uppercase"
+                       className="flex-1 py-3 font-black border-4 border-[var(--db-border)] text-[var(--db-text)] hover:bg-[var(--db-bg)] uppercase text-xs"
                     >
                        Cancel
                     </button>
                     <button 
                        type="submit"
                        disabled={deleteLoading}
-                       className="flex-1 py-4 font-black bg-[var(--db-danger)] text-white border-4 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all uppercase flex justify-center items-center gap-2"
+                       className="flex-1 py-3 font-black bg-[var(--db-danger)] text-white border-4 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all uppercase flex justify-center items-center gap-2 text-xs"
                     >
-                       {deleteLoading ? <Loader2 className="animate-spin h-5 w-5"/> : "CONFIRM DELETE"}
+                       {deleteLoading ? <Loader2 className="animate-spin h-4 w-4"/> : "CONFIRM DELETE"}
                     </button>
                  </div>
               </form>

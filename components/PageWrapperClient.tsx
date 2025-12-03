@@ -20,7 +20,8 @@ export default function PageWrapperClient({
     "/register", 
     "/verify", 
     "/forgot-password", 
-    "/reset-password"
+    "/reset-password",
+    "/account-deleted"
   ].includes(pathname);
 
   const isSlugPage =

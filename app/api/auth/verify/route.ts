@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,6 +29,12 @@ export async function POST(req: NextRequest) {
         otpSecret: null,
       },
     });
+
+    try {
+        await sendWelcomeEmail(user.email, user.name || "User");
+    } catch (e) {
+        console.error("Gagal kirim welcome email:", e);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {

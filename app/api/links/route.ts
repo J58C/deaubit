@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
+import { sanitizeAndValidateUrl, isValidSlug } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -38,14 +39,15 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const targetUrl = String(body.targetUrl || "").trim();
+    const rawUrl = String(body.targetUrl || "").trim();
     let slug = (body.slug ? String(body.slug) : "").trim();
     
     const passwordInput = body.password ? String(body.password) : null;
     const expiresAtInput = body.expiresAt ? new Date(body.expiresAt) : null;
 
-    if (!targetUrl || !targetUrl.startsWith("http")) {
-      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    const cleanUrl = sanitizeAndValidateUrl(rawUrl);
+    if (!cleanUrl) {
+      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
     }
 
     if (!slug) {
@@ -58,6 +60,10 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
+      if (!isValidSlug(slug)) {
+         return NextResponse.json({ error: "Invalid slug format" }, { status: 400 });
+      }
+
       const exists = await prisma.shortLink.findUnique({ where: { slug } });
       if (exists) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
     }
@@ -70,7 +76,7 @@ export async function POST(req: NextRequest) {
     const link = await prisma.shortLink.create({
       data: { 
         slug, 
-        targetUrl,
+        targetUrl: cleanUrl,
         password: passwordHash,
         expiresAt: expiresAtInput,
         userId: user.id

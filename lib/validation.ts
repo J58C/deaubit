@@ -2,15 +2,6 @@
 
 import { RESERVED_SLUGS } from "@/constants";
 
-export function isValidUrl(url: string): boolean {
-    try {
-        const parsed = new URL(url);
-        return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch {
-        return false;
-    }
-}
-
 export function isValidSlug(slug: string): boolean {
     if (!slug || typeof slug !== "string") return false;
     if (RESERVED_SLUGS.has(slug)) return false;
@@ -23,20 +14,22 @@ export function sanitizeInput(input: string): string {
     return input.trim().replace(/[<>]/g, "");
 }
 
-export function validateTargetUrl(targetUrl: string): {
-    valid: boolean;
-    error?: string;
-} {
-    if (!targetUrl) {
-        return { valid: false, error: "URL tidak boleh kosong" };
+export function sanitizeAndValidateUrl(url: string): string | null {
+    if (!url || typeof url !== "string") return null;
+    
+    let cleaned = url.trim();
+
+    if (!/^https?:\/\//i.test(cleaned)) {
+        cleaned = `https://${cleaned}`;
     }
 
-    if (!isValidUrl(targetUrl)) {
-        return {
-            valid: false,
-            error: "URL tidak valid. Pastikan menyertakan http:// atau https://",
-        };
+    try {
+        const parsed = new URL(cleaned);
+        if (!parsed.hostname.includes(".")) {
+             return null;
+        }
+        return parsed.href;
+    } catch {
+        return null;
     }
-
-    return { valid: true };
 }

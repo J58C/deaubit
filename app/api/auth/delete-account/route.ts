@@ -1,9 +1,10 @@
-//app/api/auth/delete-accoutn/route.ts
+//app/api/auth/delete-account/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
+import { sendAccountDeletedEmail } from "@/lib/mail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +23,16 @@ export async function POST(req: NextRequest) {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return NextResponse.json({ error: "Password salah" }, { status: 401 });
 
+    const userEmail = user.email;
+    const userName = user.name || "User";
+
     await prisma.user.delete({ where: { id: user.id } });
+
+    try {
+        await sendAccountDeletedEmail(userEmail, userName);
+    } catch (e) {
+        console.error("Gagal kirim delete email:", e);
+    }
 
     const res = NextResponse.json({ success: true });
     res.cookies.delete(SESSION_COOKIE_NAME);

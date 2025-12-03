@@ -18,6 +18,7 @@ export const RESERVED_SLUGS = new Set([
     "verify",
     "forgot-password",
     "reset-password",
+    "account-deleted",
     "favicon.ico",
     "robots.txt",
     "sitemap.xml",

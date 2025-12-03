@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { sanitizeAndValidateUrl } from "@/lib/validation";
 
 interface CreateLinkRequest {
   targetUrl?: string;
@@ -27,11 +28,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
   }
 
-  const targetUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
+  const rawUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
+  
+  const cleanUrl = sanitizeAndValidateUrl(rawUrl);
 
-  if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) {
+  if (!cleanUrl) {
     return NextResponse.json(
-      { error: "Target URL tidak valid. Sertakan http(s)://" },
+      { error: "Target URL tidak valid atau format salah." },
       { status: 400 }
     );
   }
@@ -52,7 +55,7 @@ export async function POST(req: NextRequest) {
   const link = await prisma.shortLink.create({
     data: { 
       slug, 
-      targetUrl,
+      targetUrl: cleanUrl,
       expiresAt,
     },
   });

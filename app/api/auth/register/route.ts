@@ -24,6 +24,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email dan password wajib diisi." }, { status: 400 });
     }
 
+    let finalName = name;
+    if (!finalName || finalName.trim() === "") {
+        const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+        finalName = `User-${randomSuffix}`;
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -35,11 +41,11 @@ export async function POST(req: NextRequest) {
       }
       await prisma.user.update({
         where: { email },
-        data: { name: name || existingUser.name, password: hashedPassword, otpSecret: otp },
+        data: { name: finalName, password: hashedPassword, otpSecret: otp },
       });
     } else {
       await prisma.user.create({
-        data: { name: name || email.split("@")[0], email, password: hashedPassword, otpSecret: otp },
+        data: { name: finalName, email, password: hashedPassword, otpSecret: otp },
       });
     }
 
