@@ -1,204 +1,112 @@
-# DeauBit - Elegant URL Shortener
+# DeauBit - Brutally Simple URL Shortener
 
-DeauBit adalah aplikasi URL shortener yang elegan dan mudah digunakan, dirancang untuk di-deploy pada VPS Anda sendiri. Aplikasi ini dibangun dengan Next.js 16, Prisma, dan PostgreSQL.
+DeauBit adalah aplikasi URL shortener *self-hosted* dengan desain **Neo-Brutalism** yang tegas, performa tinggi, dan fitur lengkap. Dibangun untuk Anda yang ingin kendali penuh atas tautan Anda tanpa *tracker* pihak ketiga.
 
-## Fitur
+![DeauBit Preview](https://via.placeholder.com/1200x600.png?text=DeauBit+Dashboard+Preview)
 
-- ✨ **URL Shortening** - Buat shortlink dengan slug acak atau custom
-- 🔒 **Admin Authentication** - Login dengan JWT untuk mengelola shortlinks
-- 🌐 **Public Links** - Buat shortlink tanpa login untuk akses publik
-- 🎨 **UI Modern** - Design yang indah dengan dark mode support
-- 🚀 **Performance** - Standalone mode untuk deployment yang optimal
-- 🔐 **Rate Limiting** - Perlindungan terhadap abuse
+## ✨ Fitur Utama
 
-## Tech Stack
+* **🎨 Neo-Brutalism UI:** Desain antarmuka yang berani, kontras tinggi, border tebal, dan shadow keras. Konsisten di Light & Dark Mode.
+* **🔗 Smart Shortening:** Buat shortlink dengan slug acak atau kustom.
+* **🔐 Secure Authentication:** Sistem login lengkap dengan Register, Verifikasi Email (OTP), Lupa Password, dan Hapus Akun.
+* **📊 Analytics:** Pantau performa link dengan grafik klik harian, lokasi (Negara/Kota), perangkat, dan browser.
+* **🚀 High Performance:** Menggunakan **Next.js 16 (App Router)** dan **Redis** untuk caching & rate limiting.
+* **📱 QR Code Generator:** Buat QR Code instan untuk setiap shortlink.
+* **🛡️ Password Protection:** Kunci link sensitif dengan password.
+* **⚡ Public & Private Mode:** Buat link instan tanpa login (expired 3 hari) atau login untuk link permanen.
 
-- **Framework**: [Next.js 16](https://nextjs.org/) dengan App Router
-- **Database**: PostgreSQL dengan [Prisma ORM](https://www.prisma.io/)
-- **Authentication**: JWT dengan bcryptjs
-- **Styling**: Tailwind CSS 4
-- **Icons**: Lucide React
-- **Runtime**: Node.js
+## 🛠️ Tech Stack
 
-## Prerequisites
+* **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
+* **Database:** PostgreSQL (via Prisma ORM)
+* **Cache & Rate Limit:** Redis (via Upstash atau Self-hosted)
+* **Styling:** Tailwind CSS v4 (CSS Variables)
+* **Auth:** JWT (JSON Web Tokens) & Bcrypt
+* **Email:** Nodemailer (SMTP)
+* **Charts:** Recharts
+* **Icons:** Lucide React
 
-- Node.js 20+ atau compatible runtime
-- PostgreSQL database
-- pnpm (recommended) atau npm/yarn
+## ⚙️ Prasyarat
 
-## Setup & Installation
+Sebelum memulai, pastikan Anda memiliki:
+* Node.js 20+
+* PostgreSQL Database
+* Redis Server (Lokal atau Cloud)
+* SMTP Server (untuk fitur email)
 
-### 1. Clone repository
+## 🚀 Cara Install & Menjalankan (Local)
 
-```bash
-git clone <repository-url>
-cd deauport-shortlink
-```
+1.  **Clone Repository**
+    ```bash
+    git clone [https://github.com/username/deaubit.git](https://github.com/username/deaubit.git)
+    cd deaubit
+    ```
 
-### 2. Install dependencies
+2.  **Install Dependencies**
+    ```bash
+    pnpm install
+    ```
 
-```bash
-pnpm install
-# atau
-npm install
-```
+3.  **Setup Environment Variables**
+    Duplikasi file `.env.example` menjadi `.env` dan isi konfigurasi berikut:
 
-### 3. Configure environment variables
+    ```env
+    # --- DATABASE ---
+    DATABASE_URL="postgresql://user:pass@localhost:5432/deaubit_db"
+    
+    # --- REDIS (Rate Limiting) ---
+    KV_URL="redis://localhost:6379"
 
-Buat file `.env` di root directory:
+    # --- APP CONFIG ---
+    # Ganti dengan domain asli saat produksi
+    NEXT_PUBLIC_APP_HOST="localhost:3000"
+    NEXT_PUBLIC_SHORT_HOST="localhost:3000"
+    NEXT_PUBLIC_PROTOCOL="http"
 
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/shortlink_db"
+    # --- SECURITY ---
+    JWT_SECRET="rahasia_super_panjang_dan_acak"
+    CRON_SECRET="rahasia_untuk_cron_job"
 
-# JWT Secret (generate with: openssl rand -base64 32)
-JWT_SECRET="your-super-secret-jwt-key"
+    # --- SMTP (Email) ---
+    SMTP_HOST="smtp.provider.com"
+    SMTP_PORT="587"
+    SMTP_USER="email@domain.com"
+    SMTP_PASS="password_smtp"
+    SMTP_FROM="DeauBit <noreply@domain.com>"
+    ```
 
-# Admin Credentials (password harus bcrypt hash)
-# Generate hash: node -e "console.log(require('bcryptjs').hashSync('yourpassword', 10))"
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="$2a$10$..."
+4.  **Setup Database**
+    ```bash
+    # Generate Prisma Client
+    pnpm prisma generate
 
-# Base URL for shortlinks (optional, untuk canonical redirects)
-NEXT_PUBLIC_BASE_URL="https://yourdomain.com"
-```
+    # Push Schema ke DB
+    pnpm prisma db push
+    ```
 
-### 4. Setup database
+5.  **Jalankan Server Development**
+    ```bash
+    pnpm dev
+    ```
+    Buka [http://localhost:3000](http://localhost:3000) di browser.
 
-```bash
-# Generate Prisma client
-pnpm prisma generate
+## 🌐 Deployment (Production)
 
-# Run migrations
-pnpm prisma migrate deploy
-```
+Aplikasi ini dioptimalkan untuk deployment menggunakan **Docker** atau **VPS** (Ubuntu/Debian).
 
-### 5. Run development server
+### Menggunakan Script Auto-Deploy (VPS)
+Jika Anda menggunakan skema **Builder (Tencent) -> Runner (Alibaba)**:
 
-```bash
-pnpm dev
-```
+1.  Pastikan file `deploy-to-ali.sh` sudah terkonfigurasi dengan IP server produksi.
+2.  Jalankan script dari mesin lokal/builder:
+    ```bash
+    ./deploy-to-ali.sh
+    ```
+    Script ini akan otomatis build, kirim file, install dependencies produksi, dan restart PM2 di server tujuan.
 
-Buka [http://localhost:3000](http://localhost:3000) untuk melihat aplikasi.
-
-## Production Deployment
-
-### Build aplikasi
-
+### Perintah Manual (VPS)
 ```bash
 pnpm build
-```
-
-### Start production server
-
-```bash
 pnpm start
-```
-
-### Docker Deployment (dengan standalone output)
-
-```dockerfile
-FROM node:20-alpine AS base
-
-# Install dependencies
-FROM base AS deps
-WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
-
-# Build aplikasi
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm install -g pnpm && pnpm build
-
-# Production image
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-
-EXPOSE 3000
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
-
-CMD ["node", "server.js"]
-```
-
-## Project Structure
-
-```
-deauport-shortlink/
-├── app/                    # Next.js app directory
-│   ├── api/               # API routes
-│   ├── dash/              # Dashboard untuk admin
-│   └── page.tsx           # Login & public shortlink page
-├── components/            # React components
-│   ├── LoginForm.tsx
-│   ├── PublicShortlinkForm.tsx
-│   └── ...
-├── lib/                   # Utility libraries
-│   ├── auth.ts           # Authentication functions
-│   ├── prisma.ts         # Prisma client
-│   ├── validation.ts     # Input validation
-│   └── ...
-├── types/                 # TypeScript type definitions
-├── constants/             # Application constants
-├── prisma/                # Database schema & migrations
-├── proxy.ts               # Next.js 16 proxy (replaces middleware)
-└── next.config.ts         # Next.js configuration
-```
-
-## Development Workflow
-
-### Running linter
-
-```bash
-pnpm lint
-```
-
-### Database operations
-
-```bash
-# Create new migration
-pnpm prisma migrate dev --name migration_name
-
-# Open Prisma Studio
-pnpm prisma studio
-
-# Reset database (development only!)
-pnpm prisma migrate reset
-```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Secret key untuk JWT signing |
-| `ADMIN_USERNAME` | Yes | Username untuk admin login |
-| `ADMIN_PASSWORD` | Yes | Bcrypt hash dari admin password |
-| `NEXT_PUBLIC_BASE_URL` | No | Base URL untuk canonical redirects |
-
-## Security Notes
-
-- **Password Hashing**: Admin password harus disimpan sebagai bcrypt hash
-- **JWT Secret**: Gunakan string yang kuat dan random
-- **Rate Limiting**: Built-in rate limiting untuk login dan public link creation
-- **Environment Variables**: Jangan commit file `.env` ke repository
-
-## License
-
-[Your License Here]
-
-## Contributing
-
-Contributions welcome! Please open an issue or submit a pull request.
-
-## Author
-
-Created with ❤️ by deauport
+# Atau menggunakan PM2
+pm2 start npm --name "deaubit" -- start
