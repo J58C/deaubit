@@ -16,6 +16,7 @@ type ClickData = {
   os: string | null;
   country: string | null;
   city: string | null;
+  referrer: string | null;
 };
 
 export async function GET(
@@ -50,6 +51,7 @@ export async function GET(
         os: true,
         country: true,
         city: true,
+        referrer: true,
       },
       orderBy: { clickedAt: "desc" },
     })) as ClickData[];
@@ -72,12 +74,22 @@ export async function GET(
       };
     });
 
-    const groupBy = (key: keyof ClickData) => {
+    const cleanReferrer = (url: string | null) => {
+        if (!url || url.includes("Direct")) return "Direct / Unknown";
+        try {
+            return new URL(url).hostname.replace("www.", "");
+        } catch {
+            return url;
+        }
+    };
+
+    const groupBy = (key: keyof ClickData, cleanFn?: (val: string | null) => string) => {
       const counts: Record<string, number> = {};
       
       clicks.forEach((c) => {
         if (key === 'clickedAt') return;
-        const val = (c[key] as string) || "Unknown";
+        let val = (c[key] as string) || "Unknown";
+        if (cleanFn) val = cleanFn(val);
         counts[val] = (counts[val] || 0) + 1;
       });
 
@@ -93,6 +105,7 @@ export async function GET(
       topBrowsers: groupBy("browser"),
       topOS: groupBy("os"),
       topCountries: groupBy("country"),
+      topReferrers: groupBy("referrer", cleanReferrer),
       recentClicks: clicks.slice(0, 10),
     });
   } catch (err) {

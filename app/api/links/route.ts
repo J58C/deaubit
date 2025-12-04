@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis"; 
 import { generateRandomSlug } from "@/lib/slug";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
@@ -20,12 +21,32 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const links = await prisma.shortLink.findMany({
-      where: { userId: user.id }, 
-      orderBy: { createdAt: "desc" },
-    });
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
+    const skip = (page - 1) * limit;
+
+    const [total, links] = await prisma.$transaction([
+      prisma.shortLink.count({
+        where: { userId: user.id },
+      }),
+      prisma.shortLink.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
     
-    return NextResponse.json(links);
+    return NextResponse.json({
+      data: links,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    });
   } catch (err) {
     return NextResponse.json({ error: "Error fetching links" }, { status: 500 });
   }
@@ -61,9 +82,8 @@ export async function POST(req: NextRequest) {
       }
     } else {
       if (!isValidSlug(slug)) {
-         return NextResponse.json({ error: "Invalid slug format" }, { status: 400 });
+         return NextResponse.json({ error: "Invalid slug format. Use alphanumeric, '-', or '_' only." }, { status: 400 });
       }
-
       const exists = await prisma.shortLink.findUnique({ where: { slug } });
       if (exists) return NextResponse.json({ error: "Slug already taken" }, { status: 400 });
     }
@@ -83,9 +103,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    await redis.set(`shortlink:${link.slug}`, JSON.stringify(link), "EX", 3600);
+
     return NextResponse.json(link, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Internal Server Error";
+    console.error("Create Link Error:", err);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

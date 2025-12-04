@@ -2,9 +2,9 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis";
 import { generateRandomSlug } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { sanitizeAndValidateUrl } from "@/lib/validation";
 
 interface CreateLinkRequest {
   targetUrl?: string;
@@ -28,13 +28,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
   }
 
-  const rawUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
-  
-  const cleanUrl = sanitizeAndValidateUrl(rawUrl);
+  const targetUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
 
-  if (!cleanUrl) {
+  if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) {
     return NextResponse.json(
-      { error: "Target URL tidak valid atau format salah." },
+      { error: "Target URL tidak valid. Sertakan http(s)://" },
       { status: 400 }
     );
   }
@@ -50,15 +48,17 @@ export async function POST(req: NextRequest) {
   }
 
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 3);
+  expiresAt.setDate(expiresAt.getDate() + 1);
 
   const link = await prisma.shortLink.create({
     data: { 
       slug, 
-      targetUrl: cleanUrl,
+      targetUrl,
       expiresAt,
     },
   });
+
+  await redis.set(`shortlink:${link.slug}`, JSON.stringify(link), "EX", 3600);
 
   return NextResponse.json(
     {

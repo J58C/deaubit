@@ -1,6 +1,7 @@
 // app/[slug]/page.tsx
 
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis"; 
 import Link from "next/link";
 import SlugRedirector from "@/components/SlugRedirector";
 import PasswordGuard from "@/components/PasswordGuard";
@@ -16,7 +17,23 @@ interface ShortRedirectPageProps { params: Promise<{ slug: string }>; }
 export default async function ShortRedirectPage({ params }: ShortRedirectPageProps) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
-  const link = await prisma.shortLink.findFirst({ where: { OR: [{ slug }, { id: slug }] } });
+  
+  let link: any = null;
+  const cacheKey = `shortlink:${slug}`;
+  const cachedData = await redis.get(cacheKey);
+  
+  if (cachedData) {
+    const parsed = JSON.parse(cachedData);
+    link = {
+        ...parsed,
+        expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+    };
+  } else {
+    link = await prisma.shortLink.findFirst({ where: { OR: [{ slug }, { id: slug }] } });
+    if (link) {
+        await redis.set(cacheKey, JSON.stringify(link), "EX", 3600);
+    }
+  }
 
   const ErrorCard = ({ title, msg }: { title: string, msg: string }) => (
     <div className="min-h-screen w-full flex items-center justify-center px-4 bg-[var(--db-bg)]">
@@ -46,26 +63,33 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
     );
   }
 
-  try {
-    const headersList = await headers();
-    const userAgent = headersList.get("user-agent") || "";
-    const ip = headersList.get("x-real-ip") || headersList.get("x-forwarded-for") || "127.0.0.1";
-    const realIp = Array.isArray(ip) ? ip[0] : ip.split(',')[0];
-    const parser = new UAParser(userAgent);
-    const result = parser.getResult();
-    const geo = geoip.lookup(realIp);
-    await prisma.click.create({
-      data: {
-        shortLinkId: link.id,
-        browser: result.browser.name,
-        os: result.os.name,
-        device: result.device.type || "desktop",
-        country: geo?.country,
-        city: geo?.city,
-        ip: realIp,
-      },
-    });
-  } catch (e) { console.error("Analytics Error:", e); }
+  (async () => {
+      try {
+        const headersList = await headers();
+        const userAgent = headersList.get("user-agent") || "";
+        const ip = headersList.get("x-real-ip") || headersList.get("x-forwarded-for") || "127.0.0.1";
+        const realIp = Array.isArray(ip) ? ip[0] : ip.split(',')[0];
+        
+        const referrer = headersList.get("referer") || "Direct / Unknown"; 
+
+        const parser = new UAParser(userAgent);
+        const result = parser.getResult();
+        const geo = geoip.lookup(realIp);
+        
+        await prisma.click.create({
+          data: {
+            shortLinkId: link.id,
+            browser: result.browser.name,
+            os: result.os.name,
+            device: result.device.type || "desktop",
+            country: geo?.country,
+            city: geo?.city,
+            ip: realIp,
+            referrer: referrer,
+          },
+        });
+      } catch (e) { console.error("Analytics Error:", e); }
+  })();
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-4 bg-[var(--db-bg)]">

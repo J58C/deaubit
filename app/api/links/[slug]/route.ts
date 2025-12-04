@@ -2,7 +2,10 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { redis } from "@/lib/redis"; 
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
+import bcrypt from "bcryptjs";
+import { sanitizeAndValidateUrl } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
   const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
@@ -22,29 +25,91 @@ export async function DELETE(
   const { slug: rawSlug } = await context.params;
   const slug = decodeURIComponent(rawSlug);
 
-  const existing = await prisma.shortLink.findFirst({
-    where: {
-      OR: [{ slug }, { id: slug }],
-    },
-  });
+  try {
+    const existing = await prisma.shortLink.findFirst({
+      where: { OR: [{ slug }, { id: slug }] },
+    });
 
-  if (!existing) {
-    return NextResponse.json(
-      { error: "Shortlink tidak ditemukan." },
-      { status: 404 },
-    );
+    if (!existing) {
+      return NextResponse.json({ error: "Shortlink tidak ditemukan." }, { status: 404 });
+    }
+
+    if (existing.userId !== user.id) {
+      return NextResponse.json({ error: "Forbidden: Bukan pemilik link." }, { status: 403 });
+    }
+
+    await prisma.shortLink.delete({
+      where: { id: existing.id },
+    });
+
+    try {
+        await redis.del(`shortlink:${existing.slug}`);
+    } catch (redisErr) {
+        console.error("Redis Delete Error:", redisErr);
+    }
+
+    return NextResponse.json({ ok: true });
+
+  } catch (err) {
+    console.error("Delete Error:", err);
+    return NextResponse.json({ error: "Gagal menghapus link." }, { status: 500 });
   }
+}
 
-  if (existing.userId !== user.id) {
-    return NextResponse.json(
-      { error: "Forbidden: Anda bukan pemilik link ini." },
-      { status: 403 },
-    );
+export async function PATCH(
+  req: NextRequest,
+  context: { params: Promise<{ slug: string }> }
+) {
+  try {
+    const user = getUser(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const { slug: rawSlug } = await context.params;
+    const slug = decodeURIComponent(rawSlug);
+    const body = await req.json();
+
+    const existing = await prisma.shortLink.findFirst({
+      where: { OR: [{ slug }, { id: slug }] },
+    });
+
+    if (!existing) return NextResponse.json({ error: "Link not found" }, { status: 404 });
+    if (existing.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const updateData: any = {};
+
+    if (body.targetUrl) {
+      const cleanUrl = sanitizeAndValidateUrl(body.targetUrl);
+      if (!cleanUrl) return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+      updateData.targetUrl = cleanUrl;
+    }
+
+    if (body.password) {
+       updateData.password = await bcrypt.hash(body.password, 10);
+    } else if (body.removePassword) {
+       updateData.password = null;
+    }
+
+    if (body.expiresAt) {
+       updateData.expiresAt = new Date(body.expiresAt);
+    } else if (body.removeExpiry) {
+       updateData.expiresAt = null;
+    }
+
+    const updatedLink = await prisma.shortLink.update({
+      where: { id: existing.id },
+      data: updateData,
+    });
+
+    try {
+        await redis.set(`shortlink:${existing.slug}`, JSON.stringify(updatedLink), "EX", 3600);
+    } catch (redisErr) {
+        console.error("Redis Update Error:", redisErr);
+    }
+
+    return NextResponse.json(updatedLink);
+
+  } catch (err) {
+    console.error("Edit Error:", err);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
-
-  await prisma.shortLink.delete({
-    where: { id: existing.id },
-  });
-
-  return NextResponse.json({ ok: true });
 }

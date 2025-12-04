@@ -1,10 +1,15 @@
 {
   "name": "deaubit",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "dotenv -e .env.local -- next dev",
+    "build": "dotenv -e .env.production -- prisma generate && next build",
+    "build:prod": "dotenv -e .env.production -c -- next build",
+    "prisma:generate:local": "dotenv -e .env.local -- prisma generate",
+    "prisma:generate:prod": "dotenv -e .env.production -- prisma generate",
+    "prisma:push:local": "dotenv -e .env.local -- prisma db push",
+    "prisma:push:prod": "dotenv -e .env.production -- prisma db push",
     "start": "next start",
     "lint": "eslint"
   },

@@ -48,6 +48,7 @@ model Click {
   country     String?
   city        String?
   ip          String?
+  referrer    String?
   clickedAt   DateTime @default(now())
 
   shortLink   ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)

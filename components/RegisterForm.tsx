@@ -4,10 +4,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, User2, Mail, KeyRound, FileSignature, Check, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, FileSignature, Check, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [confirmPassword, setConfirmPassword] = useState(""); 
   
   const [showPassword, setShowPassword] = useState(false);
@@ -69,25 +69,13 @@ export default function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-3">
         
         <div>
-            <label className="font-black text-[10px] uppercase mb-1 block text-[var(--db-text)]">Name</label>
-            <div className="relative">
-                <input 
-                    type="text" 
-                    className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)]" 
-                    placeholder="Your Name"
-                    value={formData.name} 
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
-                    required 
-                />
-                <User2 className="absolute right-3 top-2.5 text-[var(--db-text-muted)] w-4 h-4" />
-            </div>
-        </div>
-
-        <div>
             <label className="font-black text-[10px] uppercase mb-1 block text-[var(--db-text)]">Email</label>
             <div className="relative">
                 <input 
                     type="email" 
+                    name="email"
+                    id="register_email"
+                    autoComplete="username"
                     className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)]" 
                     placeholder="name@example.com"
                     value={formData.email} 
@@ -103,6 +91,9 @@ export default function RegisterForm() {
             <div className="relative">
                 <input 
                     type={showPassword ? "text" : "password"} 
+                    name="password"
+                    id="register_password"
+                    autoComplete="new-password" 
                     className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)] pr-10" 
                     placeholder="••••••••"
                     value={formData.password} 
@@ -124,6 +115,9 @@ export default function RegisterForm() {
             <div className="relative">
                 <input 
                     type={showConfirmPassword ? "text" : "password"} 
+                    name="confirmPassword"
+                    id="register_confirm_password"
+                    autoComplete="new-password"
                     className={`w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)] pr-10 ${
                         confirmPassword && formData.password !== confirmPassword ? "border-red-500" : ""
                     }`}

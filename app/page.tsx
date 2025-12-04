@@ -77,6 +77,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="h-1 bg-[var(--db-bg)] border-t-2 border-[var(--db-border)] border-dashed my-2" />
+                
                 <div>
                      <PublicShortlinkForm />
                 </div>
@@ -91,8 +92,14 @@ export default function LoginPage() {
         <div className="lg:col-span-5 lg:sticky lg:top-8 order-2 h-full flex flex-col gap-6">
           <LoginForm nextPath={nextPath} />
 
-          <div className="lg:hidden bg-[var(--db-text)] p-3 text-center border-4 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)]">
+          <div className="bg-[var(--db-text)] p-3 text-center border-4 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] flex flex-col gap-1">
               <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest">POWERED BY DEAUPORT</span>
+              
+              <div className="flex justify-center gap-4 text-[10px] font-bold text-[var(--db-bg)]/80 mt-1">
+                  <a href="/terms" className="hover:text-white hover:underline transition-colors">Terms</a>
+                  <span>•</span>
+                  <a href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</a>
+              </div>
           </div>
         </div>
 

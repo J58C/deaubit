@@ -9,21 +9,31 @@ import { ExistingShortlinksCard, ShortLink } from "@/components/ExistingShortlin
 import { CreateShortlinkCard } from "@/components/CreateShortlinkCard";
 import AnalyticsModal from "@/components/AnalyticsModal";
 import QrCodeModal from "@/components/QrCodeModal";
+import EditShortlinkModal from "@/components/EditShortlinkModal"; 
 import { Trash2, Loader2, ExternalLink, X } from "lucide-react";
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [userEmail, setUserEmail] = useState("User");
+  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
   const [targetUrl, setTargetUrl] = useState("");
   const [slug, setSlug] = useState("");
   const [password, setPassword] = useState(""); 
   const [expiresAt, setExpiresAt] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
   const [selectedLink, setSelectedLink] = useState<ShortLink | null>(null);
   const [analyticsSlug, setAnalyticsSlug] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null); 
+  const [editingLink, setEditingLink] = useState<ShortLink | null>(null);
+
   const [pendingDeleteSlugs, setPendingDeleteSlugs] = useState<string[]>([]);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -32,16 +42,28 @@ export default function DashboardPage() {
         if(data.user?.email) setUserEmail(data.user.email);
         if(data.user?.name) setUserEmail(data.user.name);
     });
-    fetchLinks();
+    fetchLinks(1);
   }, []);
 
-  async function fetchLinks() {
+  async function fetchLinks(page = 1) {
     setLoadingTable(true);
     try {
-      const res = await fetch("/api/links");
+      const res = await fetch(`/api/links?page=${page}&limit=10`);
       const data = await res.json();
-      setLinks(Array.isArray(data) ? data : []);
-    } catch {} finally { setLoadingTable(false); }
+      
+      if (data.data) {
+          setLinks(data.data);
+          setTotalPages(data.meta.totalPages);
+          setTotalItems(data.meta.total);
+          setCurrentPage(data.meta.page);
+      } else {
+          setLinks([]);
+      }
+    } catch {
+      setLinks([]);
+    } finally {
+      setLoadingTable(false);
+    }
   }
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {
@@ -51,25 +73,48 @@ export default function DashboardPage() {
       const res = await fetch("/api/links", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUrl, slug: slug || undefined, password: password || undefined, expiresAt: expiresAt || undefined }),
+        body: JSON.stringify({
+          targetUrl,
+          slug: slug || undefined,
+          password: password || undefined,
+          expiresAt: expiresAt || undefined,
+        }),
       });
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
+
       setTargetUrl(""); setSlug(""); setPassword(""); setExpiresAt("");
-      await fetchLinks();
-    } catch (e) { setError(e instanceof Error ? e.message : "Error"); } finally { setLoading(false); }
+      fetchLinks(1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function confirmDelete() {
     if (pendingDeleteSlugs.length === 0) return;
     setDeleteLoading(true);
     try {
-        const deletePromises = pendingDeleteSlugs.map(slug => fetch(`/api/links/${slug}`, { method: "DELETE" }));
+        const deletePromises = pendingDeleteSlugs.map(slug => 
+            fetch(`/api/links/${slug}`, { method: "DELETE" })
+        );
         await Promise.all(deletePromises);
         setPendingDeleteSlugs([]);
-        await fetchLinks();
-    } catch (e) { alert("Gagal."); } finally { setDeleteLoading(false); }
+        fetchLinks(currentPage); 
+    } catch (e) {
+        alert("Gagal.");
+    } finally {
+        setDeleteLoading(false);
+    }
   }
+
+  const changePage = (newPage: number) => {
+      if (newPage >= 1 && newPage <= totalPages) {
+          fetchLinks(newPage);
+      }
+  };
 
   const shortHost = process.env.NEXT_PUBLIC_SHORT_HOST || process.env.NEXT_PUBLIC_APP_HOST;
   const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "https";
@@ -98,9 +143,14 @@ export default function DashboardPage() {
               baseUrl={baseUrl}
               getDomainLabel={getDomainLabel}
               onDelete={(slugs) => setPendingDeleteSlugs(slugs)}
+              onEdit={(link) => setEditingLink(link)}
               onViewTarget={(link) => setSelectedLink(link)}
               onViewStats={(slug) => setAnalyticsSlug(slug)}
               onViewQr={(slug) => setQrSlug(slug)}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              onPageChange={changePage}
             />
         </div>
 
@@ -123,6 +173,14 @@ export default function DashboardPage() {
 
       {analyticsSlug && <AnalyticsModal slug={analyticsSlug} onClose={() => setAnalyticsSlug(null)} />}
       {qrSlug && <QrCodeModal slug={qrSlug} shortUrl={`${baseUrl}/${qrSlug}`} onClose={() => setQrSlug(null)} />}
+      
+      {editingLink && (
+        <EditShortlinkModal 
+            link={editingLink} 
+            onClose={() => setEditingLink(null)} 
+            onUpdate={() => fetchLinks(currentPage)} 
+        />
+      )}
       
       {pendingDeleteSlugs.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">

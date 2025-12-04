@@ -76,6 +76,8 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                         <div className="relative group">
                             <input
                                 type="email"
+                                name="email"
+                                autoComplete="username email"
                                 className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-base font-bold text-[var(--db-text)] placeholder:font-normal placeholder:text-[var(--db-text-muted)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all"
                                 placeholder="user@example.com"
                                 value={email}
@@ -96,6 +98,8 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                         <div className="relative group">
                             <input
                                 type={showPassword ? "text" : "password"}
+                                name="password"
+                                autoComplete="current-password"
                                 className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-base font-bold text-[var(--db-text)] placeholder:font-normal placeholder:text-[var(--db-text-muted)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all"
                                 placeholder="••••••••"
                                 value={password}

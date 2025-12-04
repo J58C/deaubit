@@ -1,9 +1,9 @@
-//componets/AnalyticsModal.tsx
+//components/AnalyticsModal.tsx
 
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Loader2, BarChart3, Globe, Monitor } from "lucide-react";
+import { X, Loader2, BarChart3, Globe, Monitor, Link2 } from "lucide-react"; // Tambah icon Link2
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface AnalyticsModalProps {
@@ -17,6 +17,7 @@ interface StatsData {
   topBrowsers: { name: string; value: number }[];
   topOS: { name: string; value: number }[];
   topCountries: { name: string; value: number }[];
+  topReferrers: { name: string; value: number }[];
 }
 
 export default function AnalyticsModal({ slug, onClose }: AnalyticsModalProps) {
@@ -31,7 +32,7 @@ export default function AnalyticsModal({ slug, onClose }: AnalyticsModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-      <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[12px_12px_0px_0px_var(--db-border)] p-6">
+      <div className="relative w-full max-w-5xl max-h-[90vh] overflow-y-auto bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[12px_12px_0px_0px_var(--db-border)] p-6">
         
         <div className="flex items-center justify-between mb-6 border-b-4 border-[var(--db-border)] pb-4">
           <div>
@@ -60,7 +61,7 @@ export default function AnalyticsModal({ slug, onClose }: AnalyticsModalProps) {
               {[
                 { label: "TOTAL CLICKS", value: data.total, icon: null },
                 { label: "TOP COUNTRY", value: data.topCountries[0]?.name || "-", icon: <Globe className="h-4 w-4"/> },
-                { label: "TOP DEVICE", value: data.topOS[0]?.name || "-", icon: <Monitor className="h-4 w-4"/> }
+                { label: "TOP SOURCE", value: data.topReferrers[0]?.name || "-", icon: <Link2 className="h-4 w-4"/> } // Update stat ke Source
               ].map((stat, i) => (
                 <div key={i} className="p-4 bg-[var(--db-bg)] border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)]">
                   <p className="text-[10px] font-black uppercase tracking-widest text-[var(--db-text-muted)] mb-1">{stat.label}</p>
@@ -93,17 +94,18 @@ export default function AnalyticsModal({ slug, onClose }: AnalyticsModalProps) {
               </ResponsiveContainer>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
                 { title: "TOP BROWSERS", list: data.topBrowsers },
-                { title: "TOP LOCATIONS", list: data.topCountries }
+                { title: "TOP LOCATIONS", list: data.topCountries },
+                { title: "TOP REFERRERS", list: data.topReferrers }
               ].map((section, idx) => (
                 <div key={idx}>
                    <h3 className="text-sm font-black uppercase border-b-2 border-[var(--db-border)] mb-3 pb-1 text-[var(--db-text)]">{section.title}</h3>
                    <div className="space-y-2">
                       {section.list.map((item, i) => (
                         <div key={i} className="flex items-center justify-between text-xs p-2 bg-[var(--db-bg)] border-2 border-[var(--db-border)] text-[var(--db-text)]">
-                          <span className="font-bold">{item.name || "Unknown"}</span>
+                          <span className="font-bold truncate max-w-[150px]">{item.name || "Unknown"}</span>
                           <span className="font-mono bg-[var(--db-primary)] text-[var(--db-primary-fg)] px-1.5">{item.value}</span>
                         </div>
                       ))}

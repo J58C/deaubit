@@ -25,7 +25,7 @@ export function CreateShortlinkCard({
 }: CreateShortlinkCardProps) {
   
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   return (
     <div className="bg-[var(--db-surface)] border-2 md:border-4 border-[var(--db-border)] p-4 lg:p-5 shadow-[6px_6px_0px_0px_var(--db-border)] lg:shadow-[8px_8px_0px_0px_var(--db-border)]">
       
@@ -36,7 +36,7 @@ export function CreateShortlinkCard({
         <h2 className="text-lg lg:text-xl font-black uppercase tracking-tighter text-[var(--db-text)]">New Link</h2>
       </div>
 
-      <form className="space-y-4" onSubmit={onSubmit}>
+      <form className="space-y-4" onSubmit={onSubmit} autoComplete="off">
         
         <div className="space-y-1">
           <label className="text-[10px] lg:text-xs font-black uppercase tracking-widest text-[var(--db-text-muted)]">Target URL</label>
@@ -47,6 +47,8 @@ export function CreateShortlinkCard({
             onChange={(e) => onChangeTarget(e.target.value)}
             required
             disabled={loading}
+            autoComplete="off"
+            name="target_url_unique"
           />
         </div>
 
@@ -60,6 +62,8 @@ export function CreateShortlinkCard({
               value={slug}
               onChange={(e) => onChangeSlug(e.target.value)}
               disabled={loading}
+              autoComplete="off"
+              name="slug_unique"
             />
           </div>
         </div>
@@ -86,6 +90,7 @@ export function CreateShortlinkCard({
             {isExpanded && (
                 <div className="p-3 pt-0 grid grid-cols-1 gap-3 animate-in slide-in-from-top-1 fade-in duration-200">
                     <div className="h-[1px] bg-[var(--db-border)]/20 mb-1 w-full"></div>
+                    
                     <div className="flex items-center gap-2 bg-[var(--db-surface)] border-2 border-[var(--db-border)] px-2 py-2 focus-within:shadow-[2px_2px_0px_0px_var(--db-border)] transition-shadow">
                         <Lock className="h-4 w-4 text-[var(--db-text)] shrink-0" />
                         <input
@@ -95,8 +100,13 @@ export function CreateShortlinkCard({
                             value={password}
                             onChange={(e) => onChangePassword(e.target.value)}
                             disabled={loading}
+                            
+                            autoComplete="new-password" 
+                            name="link_lock_password_unique" 
+                            data-lpignore="true" 
                         />
                     </div>
+                    
                     <div className="flex items-center gap-2 bg-[var(--db-surface)] border-2 border-[var(--db-border)] px-2 py-2 focus-within:shadow-[2px_2px_0px_0px_var(--db-border)] transition-shadow">
                         <Calendar className="h-4 w-4 text-[var(--db-text)] shrink-0" />
                         <input
