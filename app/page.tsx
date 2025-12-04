@@ -47,10 +47,11 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 md:py-10">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
-        <div className="lg:col-span-7 space-y-6 order-1">
-          <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[8px_8px_0px_0px_var(--db-border)] overflow-hidden">
+        <div className="lg:col-span-7 order-1 h-full flex flex-col">
+          <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[8px_8px_0px_0px_var(--db-border)] flex flex-col h-full">
             
             <div className="bg-[var(--db-accent)] p-6 border-b-4 border-[var(--db-border)]">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -59,12 +60,12 @@ export default function LoginPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-[var(--db-accent-fg)] leading-none">DeauBit</h1>
-                        <p className="text-sm font-bold text-[var(--db-accent-fg)] opacity-90 mt-1">Elegant & Brutal URL Shortener.</p>
+                        <p className="text-sm font-bold text-[var(--db-accent-fg)] opacity-90 mt-1">URL Shortener.</p>
                     </div>
                 </div>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 flex-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="flex items-start gap-3 p-3 bg-[var(--db-bg)] border-2 border-[var(--db-border)]">
                         <Zap className="h-5 w-5 text-[var(--db-primary)] shrink-0" />
@@ -83,24 +84,19 @@ export default function LoginPage() {
                 </div>
             </div>
 
-            <div className="hidden lg:block bg-[var(--db-text)] p-2 text-center border-t-4 border-[var(--db-border)]">
-                <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest">POWERED BY DEAUPORT</span>
+            <div className="bg-[var(--db-text)] p-4 text-center border-t-4 border-[var(--db-border)] mt-auto">
+                <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest block mb-2">POWERED BY DEAUPORT</span>
+                <div className="flex justify-center gap-4 text-[10px] font-bold text-[var(--db-bg)]/80">
+                    <a href="/terms" className="hover:text-white hover:underline transition-colors">Terms</a>
+                    <span>•</span>
+                    <a href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</a>
+                </div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-5 lg:sticky lg:top-8 order-2 h-full flex flex-col gap-6">
+        <div className="lg:col-span-5 order-2 h-full">
           <LoginForm nextPath={nextPath} />
-
-          <div className="bg-[var(--db-text)] p-3 text-center border-4 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] flex flex-col gap-1">
-              <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest">POWERED BY DEAUPORT</span>
-              
-              <div className="flex justify-center gap-4 text-[10px] font-bold text-[var(--db-bg)]/80 mt-1">
-                  <a href="/terms" className="hover:text-white hover:underline transition-colors">Terms</a>
-                  <span>•</span>
-                  <a href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</a>
-              </div>
-          </div>
         </div>
 
       </div>

@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Loader2, Mail, FileSignature, Check, Eye, EyeOff } from "lucide-react";
 
 export default function RegisterForm() {
@@ -12,6 +13,8 @@ export default function RegisterForm() {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [agreed, setAgreed] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +24,12 @@ export default function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!agreed) {
+        setError("You must agree to the Terms & Privacy Policy.");
+        setLoading(false);
+        return;
+    }
 
     if (formData.password !== confirmPassword) {
       setError("Password tidak cocok.");
@@ -74,8 +83,7 @@ export default function RegisterForm() {
                 <input 
                     type="email" 
                     name="email"
-                    id="register_email"
-                    autoComplete="username"
+                    autoComplete="username email"
                     className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)]" 
                     placeholder="name@example.com"
                     value={formData.email} 
@@ -92,8 +100,7 @@ export default function RegisterForm() {
                 <input 
                     type={showPassword ? "text" : "password"} 
                     name="password"
-                    id="register_password"
-                    autoComplete="new-password" 
+                    autoComplete="new-password"
                     className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)] pr-10" 
                     placeholder="••••••••"
                     value={formData.password} 
@@ -116,7 +123,6 @@ export default function RegisterForm() {
                 <input 
                     type={showConfirmPassword ? "text" : "password"} 
                     name="confirmPassword"
-                    id="register_confirm_password"
                     autoComplete="new-password"
                     className={`w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-3 py-2 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal placeholder:text-[var(--db-text-muted)] pr-10 ${
                         confirmPassword && formData.password !== confirmPassword ? "border-red-500" : ""
@@ -140,6 +146,19 @@ export default function RegisterForm() {
                     </button>
                 </div>
             </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-2">
+            <input 
+                type="checkbox" 
+                id="terms_agree_register" 
+                className="w-4 h-4 accent-[var(--db-primary)] cursor-pointer shrink-0" 
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+            />
+            <label htmlFor="terms_agree_register" className="text-[10px] font-bold text-[var(--db-text-muted)] cursor-pointer select-none leading-tight">
+                I agree to the <Link href="/terms" target="_blank" className="underline hover:text-[var(--db-text)]">Terms of Service</Link> & <Link href="/privacy" target="_blank" className="underline hover:text-[var(--db-text)]">Privacy Policy</Link>.
+            </label>
         </div>
 
         {error && (

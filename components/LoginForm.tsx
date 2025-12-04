@@ -55,8 +55,8 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
     }
 
     return (
-        <section className="flex flex-col h-full justify-center">
-            <div className="border-4 border-[var(--db-border)] p-8 bg-[var(--db-surface)] shadow-[8px_8px_0px_0px_var(--db-border)] hover:shadow-[12px_12px_0px_0px_var(--db-border)] transition-shadow duration-300">
+        <section className="h-full w-full">
+            <div className="h-full flex flex-col justify-center border-4 border-[var(--db-border)] p-8 bg-[var(--db-surface)] shadow-[8px_8px_0px_0px_var(--db-border)] hover:shadow-[12px_12px_0px_0px_var(--db-border)] transition-all duration-300">
                 
                 <div className="flex items-center gap-4 mb-8 border-b-4 border-[var(--db-border)] pb-4">
                     <div className="bg-[var(--db-accent)] text-[var(--db-accent-fg)] p-3 border-2 border-[var(--db-border)]">
@@ -92,7 +92,7 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                         <div className="flex justify-between items-center mb-2">
                             <label className="font-black text-sm uppercase tracking-wider block text-[var(--db-text)]">Password</label>
                             <Link href="/forgot-password" className="text-xs font-bold text-[var(--db-primary)] hover:underline decoration-2">
-                                LUPA PASSWORD?
+                                Forgot Password?
                             </Link>
                         </div>
                         <div className="relative group">
@@ -138,9 +138,9 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                 </form>
 
                 <div className="mt-8 text-center pt-6 border-t-4 border-[var(--db-border)] border-dotted">
-                    <span className="text-sm font-bold text-[var(--db-text-muted)]">Belum punya akun? </span>
+                    <span className="text-sm font-bold text-[var(--db-text-muted)]">Don't have an account? </span>
                     <Link href="/register" className="inline-block ml-1 text-sm font-black bg-[var(--db-accent)] text-[var(--db-accent-fg)] px-2 border-2 border-[var(--db-border)] hover:shadow-[2px_2px_0px_0px_var(--db-border)] hover:-translate-y-0.5 transition-all">
-                        DAFTAR DISINI
+                        SIGNUP HERE
                     </Link>
                 </div>
             </div>

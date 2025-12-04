@@ -54,7 +54,7 @@ export default function PublicShortlinkForm() {
 
             setPublicResult({ slug: data.slug, shortUrl });
             setPublicTarget("");
-            setAgreed(false);
+            setAgreed(false); 
         } catch (err) {
             const msg =
                 err instanceof Error ? err.message : "Gagal membuat shortlink.";
@@ -73,7 +73,7 @@ export default function PublicShortlinkForm() {
                 </div>
                 
                 <p className="text-sm font-medium text-[var(--db-text-muted)] mb-4">
-                    Buat link instan tanpa login (Expired: 1 Hari).
+                    Instant shorten without login (Expires: 1 Day).
                 </p>
 
                 <form className="space-y-4" onSubmit={handlePublicSubmit}>
@@ -89,11 +89,11 @@ export default function PublicShortlinkForm() {
                         />
                     </div>
 
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-center gap-2">
                         <input 
                             type="checkbox" 
                             id="terms_agree" 
-                            className="mt-1 w-4 h-4 accent-[var(--db-primary)] cursor-pointer"
+                            className="w-4 h-4 accent-[var(--db-primary)] cursor-pointer shrink-0" 
                             checked={agreed}
                             onChange={(e) => setAgreed(e.target.checked)}
                         />
