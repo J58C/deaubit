@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Mail, FileSignature, Check, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, FileSignature, Check, Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -17,13 +17,13 @@ export default function RegisterForm() {
   const [agreed, setAgreed] = useState(false);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string>(""); 
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+    setError(""); 
 
     if (!agreed) {
         setError("You must agree to the Terms & Privacy Policy.");
@@ -63,7 +63,7 @@ export default function RegisterForm() {
   }
 
   return (
-    <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[8px_8px_0px_0px_var(--db-border)] w-full max-w-md">
+    <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] px-8 py-8 shadow-[8px_8px_0px_0px_var(--db-border)] w-full max-w-lg">
       
       <div className="flex items-center gap-3 mb-6 border-b-4 border-[var(--db-border)] pb-3">
          <div className="bg-[var(--db-accent)] p-2 border-2 border-[var(--db-border)]">
@@ -161,16 +161,29 @@ export default function RegisterForm() {
             </label>
         </div>
 
-        {error && (
-            <div className="bg-[var(--db-danger)] text-white text-[10px] font-bold p-2 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)] flex items-center gap-2">
-                <span>❌</span> {error}
+        <div className="min-h-[3rem] w-full flex items-center justify-center px-1 py-1">
+            <div 
+                className={`
+                    w-full p-2 flex items-center gap-2 text-[9px] font-bold
+                    border-2 
+                    transition-colors duration-200
+                    ${error 
+                        ? "bg-[var(--db-danger)] border-[var(--db-border)] text-white shadow-[2px_2px_0px_0px_var(--db-border)]" 
+                        : "bg-transparent border-transparent text-transparent select-none"
+                    }
+                `}
+            >
+                <AlertCircle className={`h-4 w-4 shrink-0 ${!error && "opacity-0"}`} />
+                <span className="leading-tight break-words w-full">
+                   {error || "Placeholder"}
+                </span>
             </div>
-        )}
+        </div>
 
         <button 
             type="submit" 
             disabled={loading} 
-            className="w-full mt-4 bg-[var(--db-text)] text-[var(--db-bg)] border-2 border-[var(--db-border)] py-3 font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 transition-all disabled:opacity-50 text-sm"
+            className="w-full mt-0 bg-[var(--db-text)] text-[var(--db-bg)] border-2 border-[var(--db-border)] py-3 font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 transition-all disabled:opacity-50 text-sm"
         >
             {loading ? <Loader2 className="animate-spin mx-auto w-5 h-5"/> : "CREATE ACCOUNT"}
         </button>

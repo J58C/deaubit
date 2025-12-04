@@ -5,7 +5,7 @@
 import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import DeauBitLogo from "@/components/DeauBitLogo";
-import { Loader2, Lock, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Eye, EyeOff, Check } from "lucide-react";
 
 function ResetContent() {
   const searchParams = useSearchParams();
@@ -14,6 +14,11 @@ function ResetContent() {
   const email = searchParams.get("email");
 
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [msg, setMsg] = useState("");
@@ -21,6 +26,15 @@ function ResetContent() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setStatus("idle");
+    
+    if (password !== confirmPassword) {
+        setStatus("error");
+        setMsg("Passwords do not match.");
+        setLoading(false);
+        return;
+    }
+
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
@@ -34,7 +48,7 @@ function ResetContent() {
       setTimeout(() => router.push("/"), 2000);
     } catch (err) {
       setStatus("error");
-      setMsg(err instanceof Error ? err.message : "Gagal");
+      setMsg(err instanceof Error ? err.message : "Failed to reset password.");
     } finally {
       setLoading(false);
     }
@@ -51,7 +65,7 @@ function ResetContent() {
   if (status === "success") {
     return (
       <div className="text-center space-y-4">
-        <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full shadow-[4px_4px_0px_0px_var(--db-border)]">
+        <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full shadow-[4px_4px_0px_0px_var(--db-border)] animate-bounce">
            <CheckCircle2 className="h-10 w-10 text-white" />
         </div>
         <h3 className="text-2xl font-black uppercase text-[var(--db-text)]">Password Updated!</h3>
@@ -61,20 +75,58 @@ function ResetContent() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      
       <div>
         <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text)]">New Password</label>
         <div className="relative">
           <input 
-            type="password" 
-            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pl-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]" 
+            type={showPassword ? "text" : "password"} 
+            className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pr-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]" 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
             placeholder="Min. 6 chars"
+            autoComplete="new-password"
           />
-          <Lock className="absolute left-4 top-4 h-6 w-6 text-[var(--db-text-muted)]" />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-4 top-4 text-[var(--db-text-muted)] hover:text-[var(--db-text)]"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text)]">Re-enter Password</label>
+        <div className="relative">
+          <input 
+            type={showConfirmPassword ? "text" : "password"} 
+            className={`w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 pr-12 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] ${
+                confirmPassword && password !== confirmPassword ? "border-red-500" : ""
+            }`}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            placeholder="Confirm password"
+            autoComplete="new-password"
+          />
+          
+          <div className="absolute right-4 top-4 flex items-center gap-2">
+            {confirmPassword && password === confirmPassword && (
+                <Check className="h-5 w-5 text-green-500" />
+            )}
+            <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="text-[var(--db-text-muted)] hover:text-[var(--db-text)]"
+            >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -85,8 +137,9 @@ function ResetContent() {
       )}
 
       <button 
+        type="submit"
         disabled={loading} 
-        className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] py-4 font-black uppercase border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all"
+        className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] py-4 font-black uppercase border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? <Loader2 className="h-6 w-6 animate-spin mx-auto"/> : "SET NEW PASSWORD"}
       </button>

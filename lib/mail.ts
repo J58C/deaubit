@@ -22,15 +22,18 @@ function getEmailTemplate(title: string, bodyContent: string) {
       <style>
         body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 0; }
         .container { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e4e4e7; }
-        .header { background-color: #000000; padding: 30px 20px; text-align: center; }
+        
+        /* Header menggunakan warna Brand (Indigo) */
+        .header { background-color: #4f46e5; padding: 30px 20px; text-align: center; }
         .header h1 { color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        
         .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
         .footer { background-color: #fafafa; padding: 20px; text-align: center; font-size: 12px; color: #a1a1aa; border-top: 1px solid #f4f4f5; }
         
-        /* UPDATE: Tombol dibuat Hitam Solid agar kontras tinggi di semua tema */
+        /* Tombol menggunakan warna Brand */
         .btn { 
             display: inline-block; 
-            background-color: #000000; 
+            background-color: #4f46e5; 
             color: #ffffff !important; 
             padding: 14px 28px; 
             text-decoration: none; 
@@ -41,7 +44,20 @@ function getEmailTemplate(title: string, bodyContent: string) {
             letter-spacing: 1px;
         }
         
-        .otp-box { background-color: #f0f9ff; border: 2px dashed #000000; color: #000000; font-size: 32px; font-weight: 900; text-align: center; padding: 20px; margin: 20px 0; letter-spacing: 8px; border-radius: 8px; }
+        /* OTP Box menggunakan warna Brand untuk border & teks */
+        .otp-box { 
+            background-color: #f0f9ff; 
+            border: 2px dashed #4f46e5; 
+            color: #4f46e5; 
+            font-size: 32px; 
+            font-weight: 900; 
+            text-align: center; 
+            padding: 20px; 
+            margin: 20px 0; 
+            letter-spacing: 8px; 
+            border-radius: 8px; 
+        }
+        
         .text-muted { color: #64748b; font-size: 14px; }
       </style>
     </head>
@@ -51,7 +67,7 @@ function getEmailTemplate(title: string, bodyContent: string) {
           <h1>DeauBit</h1>
         </div>
         <div class="content">
-          <h2 style="margin-top: 0; color: #000000;">${title}</h2>
+          <h2 style="margin-top: 0; color: #4f46e5;">${title}</h2>
           ${bodyContent}
         </div>
         <div class="footer">
@@ -75,7 +91,7 @@ export async function sendVerificationEmail(email: string, otp: string) {
     
     <div class="otp-box">${otp}</div>
     
-    <p class="text-muted">This code is valid for **15 minutes**. Do not share this code with anyone.</p>
+    <p class="text-muted">This code is valid for <strong>15 minutes</strong>. Do not share this code with anyone.</p>
   `;
 
   return await transporter.sendMail({
@@ -100,10 +116,10 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       <a href="${resetLink}" class="btn" style="color: #ffffff !important;">Reset My Password</a>
     </div>
     
-    <p class="text-muted">This link will expire in **1 hour**.</p>
+    <p class="text-muted">This link will expire in <strong>1 hour</strong>.</p>
     <p class="text-muted" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
       If the button above does not work, copy and paste the following link into your browser:<br>
-      <a href="${resetLink}" style="color: #000000; word-break: break-all;">${resetLink}</a>
+      <a href="${resetLink}" style="color: #4f46e5; word-break: break-all;">${resetLink}</a>
     </p>
   `;
 
@@ -127,7 +143,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
     <p>You now have full access to create shortlinks, manage your links, and monitor visitor analytics.</p>
     
     <div style="text-align: center; margin: 30px 0;">
-      <a href="${loginLink}" class="btn" style="color: #ffffff !important; background-color: #000000;">Go to Dashboard</a>
+      <a href="${loginLink}" class="btn" style="color: #ffffff !important;">Go to Dashboard</a>
     </div>
     
     <p>Thank you for joining us!</p>

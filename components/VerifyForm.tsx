@@ -4,7 +4,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Loader2, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Loader2, ShieldCheck, CheckCircle2, RefreshCw, AlertCircle } from "lucide-react";
 
 function VerifyContent() {
   const [otp, setOtp] = useState("");
@@ -13,6 +13,10 @@ function VerifyContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
+  const [cooldown, setCooldown] = useState(0); 
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -21,10 +25,17 @@ function VerifyContent() {
     if (emailParam) setEmail(emailParam);
   }, [searchParams]);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => setCooldown((prev) => prev - 1), 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setResendMessage("");
 
     try {
       const res = await fetch("/api/auth/verify", {
@@ -35,14 +46,41 @@ function VerifyContent() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Verifikasi gagal");
+      if (!res.ok) throw new Error(data.error || "Verification failed");
 
       setSuccess(true); 
       
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (cooldown > 0) return;
+    
+    setResendLoading(true);
+    setResendMessage("");
+    setError(null);
+
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Failed to resend");
+
+      setResendMessage("New code sent! Check inbox/spam.");
+      setCooldown(60); 
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed");
+    } finally {
+      setResendLoading(false);
     }
   }
 
@@ -85,11 +123,21 @@ function VerifyContent() {
             autoFocus 
         />
         
-        {error && (
-            <div className="bg-[var(--db-danger)] text-white font-bold text-xs p-3 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)]">
-                {error}
-            </div>
-        )}
+        <div className="min-h-[3.5rem] flex items-center justify-center px-1">
+            {error ? (
+                <div className="bg-[var(--db-danger)] text-white font-bold text-xs p-2 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)] w-full animate-in fade-in slide-in-from-top-1 duration-200 flex items-center justify-center gap-2">
+                   <AlertCircle className="h-4 w-4 shrink-0" /> {error}
+                </div>
+            ) : resendMessage ? (
+                <div className="bg-[var(--db-success)] text-white font-bold text-xs p-2 border-2 border-[var(--db-border)] shadow-[2px_2px_0px_0px_var(--db-border)] w-full animate-in fade-in slide-in-from-top-1 duration-200 flex items-center justify-center gap-2">
+                   <CheckCircle2 className="h-4 w-4 shrink-0" /> {resendMessage}
+                </div>
+            ) : (
+                <div className="w-full h-full flex items-center justify-center opacity-0 pointer-events-none text-xs font-bold text-[var(--db-text-muted)]">
+                    Waiting for input...
+                </div>
+            )}
+        </div>
         
         <button 
             type="submit" 
@@ -98,6 +146,25 @@ function VerifyContent() {
         >
             {loading ? <Loader2 className="animate-spin mx-auto"/> : "CONFIRM CODE"}
         </button>
+
+        <div className="text-center pt-2">
+            <button
+                type="button"
+                onClick={handleResend}
+                disabled={cooldown > 0 || resendLoading}
+                className="text-xs font-bold text-[var(--db-text-muted)] hover:text-[var(--db-primary)] disabled:opacity-50 disabled:hover:text-[var(--db-text-muted)] flex items-center justify-center gap-2 mx-auto transition-colors h-8"
+            >
+                {resendLoading ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                    <RefreshCw className={`h-3 w-3 ${cooldown > 0 ? "" : "hover:rotate-180 transition-transform"}`} />
+                )}
+                {cooldown > 0 
+                    ? `Resend available in ${cooldown}s` 
+                    : "Didn't receive code? Resend"}
+            </button>
+        </div>
+
       </form>
     </div>
   );
