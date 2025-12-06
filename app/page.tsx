@@ -8,6 +8,7 @@ import { Loader2, Zap } from "lucide-react";
 import DeauBitLogo from "@/components/DeauBitLogo";
 import LoginForm from "@/components/LoginForm";
 import PublicShortlinkForm from "@/components/PublicShortlinkForm";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [checkingSession, setCheckingSession] = useState(true);
@@ -20,7 +21,9 @@ export default function LoginPage() {
     async function checkSession() {
       try {
         const res = await fetch("/api/session", { method: "GET", credentials: "include" });
-        if (!cancelled && res.ok) {
+        const data = await res.json();
+        
+        if (!cancelled && data.authenticated) {
           router.replace(nextPath);
           return;
         }
@@ -47,7 +50,6 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 md:py-10">
-      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         <div className="lg:col-span-7 order-1 h-full flex flex-col">
@@ -60,7 +62,7 @@ export default function LoginPage() {
                     </div>
                     <div>
                         <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-[var(--db-accent-fg)] leading-none">DeauBit</h1>
-                        <p className="text-sm font-bold text-[var(--db-accent-fg)] opacity-90 mt-1">URL Shortener.</p>
+                        <p className="text-sm font-bold text-[var(--db-accent-fg)] opacity-90 mt-1">Elegant & Brutal URL Shortener.</p>
                     </div>
                 </div>
             </div>
@@ -84,19 +86,28 @@ export default function LoginPage() {
                 </div>
             </div>
 
-            <div className="bg-[var(--db-text)] p-4 text-center border-t-4 border-[var(--db-border)] mt-auto">
+            <div className="hidden lg:block bg-[var(--db-text)] p-4 text-center border-t-4 border-[var(--db-border)] mt-auto">
                 <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest block mb-2">POWERED BY DEAUPORT</span>
                 <div className="flex justify-center gap-4 text-[10px] font-bold text-[var(--db-bg)]/80">
-                    <a href="/terms" className="hover:text-white hover:underline transition-colors">Terms</a>
+                    <Link href="/terms" className="hover:text-white hover:underline transition-colors">Terms</Link>
                     <span>•</span>
-                    <a href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</a>
+                    <Link href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</Link>
                 </div>
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-5 order-2 h-full">
+        <div className="lg:col-span-5 order-2 h-full flex flex-col">
           <LoginForm nextPath={nextPath} />
+
+          <div className="block lg:hidden bg-[var(--db-text)] p-4 text-center border-4 border-[var(--db-border)] mt-6 shadow-[4px_4px_0px_0px_var(--db-border)]">
+              <span className="text-[10px] font-bold text-[var(--db-bg)] uppercase tracking-widest block mb-2">POWERED BY DEAUPORT</span>
+              <div className="flex justify-center gap-4 text-[10px] font-bold text-[var(--db-bg)]/80">
+                  <Link href="/terms" className="hover:text-white hover:underline transition-colors">Terms</Link>
+                  <span>•</span>
+                  <Link href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</Link>
+              </div>
+          </div>
         </div>
 
       </div>
