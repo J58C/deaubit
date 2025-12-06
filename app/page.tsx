@@ -50,6 +50,7 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 md:py-10">
+      
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
         
         <div className="lg:col-span-7 order-1 h-full flex flex-col">
@@ -92,6 +93,8 @@ export default function LoginPage() {
                     <Link href="/terms" className="hover:text-white hover:underline transition-colors">Terms</Link>
                     <span>•</span>
                     <Link href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</Link>
+                    <span>•</span>
+                    <Link href="/report" className="text-red-300 hover:text-red-100 hover:underline transition-colors">Report Abuse</Link>
                 </div>
             </div>
           </div>
@@ -106,6 +109,8 @@ export default function LoginPage() {
                   <Link href="/terms" className="hover:text-white hover:underline transition-colors">Terms</Link>
                   <span>•</span>
                   <Link href="/privacy" className="hover:text-white hover:underline transition-colors">Privacy</Link>
+                  <span>•</span>
+                  <Link href="/report" className="text-red-300 hover:text-red-100 hover:underline transition-colors">Report Abuse</Link>
               </div>
           </div>
         </div>

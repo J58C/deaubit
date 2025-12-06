@@ -10,7 +10,8 @@ import { CreateShortlinkCard } from "@/components/CreateShortlinkCard";
 import AnalyticsModal from "@/components/AnalyticsModal";
 import QrCodeModal from "@/components/QrCodeModal";
 import EditShortlinkModal from "@/components/EditShortlinkModal"; 
-import { Trash2, Loader2, ExternalLink, X } from "lucide-react";
+import { Trash2, Loader2, ExternalLink, X, AlertTriangle } from "lucide-react"; 
+import Link from "next/link";
 
 export default function DashboardPage() {
   const [links, setLinks] = useState<ShortLink[]>([]);
@@ -134,9 +135,10 @@ export default function DashboardPage() {
         <UserMenu username={userEmail} />
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_400px] gap-6 lg:gap-8 items-start relative pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_400px] gap-6 lg:gap-8 items-start relative">
         
-        <div className="order-2 lg:order-1 min-w-0 h-full">
+        <div className="order-2 lg:order-1 min-w-0 h-full flex flex-col">
+            
             <ExistingShortlinksCard
               links={links}
               loadingTable={loadingTable}
@@ -170,6 +172,27 @@ export default function DashboardPage() {
             />
         </div>
       </div>
+
+      <div className="bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[8px_8px_0px_0px_var(--db-border)] flex flex-col md:flex-row items-center justify-between gap-4 mt-4">
+          
+          <div className="flex flex-col items-center md:items-start">
+             <span className="text-xs font-black uppercase tracking-widest text-[var(--db-text)]">DEAUBIT</span>
+             <span className="text-[10px] font-bold text-[var(--db-text-muted)]">Powered by Deauport</span>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-bold text-[var(--db-text-muted)]">
+             <Link href="/terms" className="hover:text-[var(--db-text)] hover:underline transition-colors">Terms</Link>
+             <Link href="/privacy" className="hover:text-[var(--db-text)] hover:underline transition-colors">Privacy</Link>
+             <Link href="/report" className="text-red-500 hover:text-red-700 hover:underline flex items-center gap-1 transition-colors">
+                <AlertTriangle className="h-3 w-3" /> Report Abuse
+             </Link>
+          </div>
+
+          <div className="text-[10px] font-bold text-[var(--db-text-muted)]">
+             &copy; {new Date().getFullYear()}
+          </div>
+      </div>
+
 
       {analyticsSlug && <AnalyticsModal slug={analyticsSlug} onClose={() => setAnalyticsSlug(null)} />}
       {qrSlug && <QrCodeModal slug={qrSlug} shortUrl={`${baseUrl}/${qrSlug}`} onClose={() => setQrSlug(null)} />}

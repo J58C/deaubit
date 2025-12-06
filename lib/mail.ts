@@ -172,3 +172,42 @@ export async function sendAccountDeletedEmail(email: string, name: string) {
     html: getEmailTemplate("Goodbye 👋", htmlContent),
   });
 }
+
+export async function sendAbuseReportEmail(data: { 
+  linkUrl: string; 
+  reason: string; 
+  details: string; 
+  reporter: string 
+}) {
+  const adminEmail = process.env.ABUSE_REPORT_EMAIL || process.env.SMTP_USER;
+  
+  const subject = `Link Report: ${new URL(data.linkUrl).pathname}`; 
+  
+  const htmlContent = `
+    <p><strong>New User Report</strong></p>
+    <p>A user has flagged a link for review.</p>
+    
+    <div style="background:#f9fafb; border:1px solid #e5e7eb; padding:15px; margin:20px 0; border-radius:8px; color:#1f2937;">
+       <p><strong>Target URL:</strong><br>
+       <span style="background:#eee; padding:2px 5px; border-radius:4px; font-family:monospace;">${data.linkUrl}</span></p>
+       
+       <p><strong>Category:</strong><br>
+       ${data.reason}</p>
+       
+       <p><strong>Details:</strong><br>
+       ${data.details || "-"}</p>
+       
+       <p><strong>Reporter:</strong><br>
+       ${data.reporter || "Anonymous"}</p>
+    </div>
+    
+    <p style="font-size:12px; color:#666;">Login to dashboard to take action.</p>
+  `;
+
+  return await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to: adminEmail,
+    subject: subject,
+    html: getEmailTemplate("Action Required", htmlContent),
+  });
+}
