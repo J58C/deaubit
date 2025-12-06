@@ -1,43 +1,32 @@
-# DeauBit - Brutally Simple URL Shortener
+# DeauBit
 
-DeauBit adalah aplikasi URL shortener *self-hosted* dengan desain **Neo-Brutalism** yang tegas, performa tinggi, dan fitur lengkap. Dibangun untuk Anda yang ingin kendali penuh atas tautan Anda tanpa *tracker* pihak ketiga.
+DeauBit adalah aplikasi URL shortener *self-hosted* yang dirancang dengan antarmuka modern (Neo-Brutalism), performa tinggi, dan fokus pada privasi. Proyek ini memberikan kendali penuh atas tautan Anda tanpa pelacak pihak ketiga.
 
+## Fitur
 
-## ✨ Fitur Utama
+* **Shortening:** Membuat tautan pendek dengan slug acak atau kustom.
+* **Autentikasi:** Sistem akun lengkap (Daftar, Login, Verifikasi Email, Reset Password).
+* **Analitik:** Statistik klik harian, lokasi pengunjung, perangkat, dan browser.
+* **QR Code:** Pembuatan QR Code otomatis untuk setiap tautan.
+* **Proteksi Password:** Mengunci tautan sensitif dengan kata sandi.
+* **Mode Publik & Privat:** Pengunjung bisa membuat tautan sementara (expired 1 hari), pengguna terdaftar bisa membuat tautan permanen.
+* **Keamanan:** Rate limiting, validasi IP asli, dan manajemen sesi yang aman.
 
-* **🎨 Neo-Brutalism UI:** Desain antarmuka yang berani, kontras tinggi, border tebal, dan shadow keras. Konsisten di Light & Dark Mode.
-* **🔗 Smart Shortening:** Buat shortlink dengan slug acak atau kustom.
-* **🔐 Secure Authentication:** Sistem login lengkap dengan Register, Verifikasi Email (OTP), Lupa Password, dan Hapus Akun.
-* **📊 Analytics:** Pantau performa link dengan grafik klik harian, lokasi (Negara/Kota), perangkat, dan browser.
-* **🚀 High Performance:** Menggunakan **Next.js 16 (App Router)** dan **Redis** untuk caching & rate limiting.
-* **📱 QR Code Generator:** Buat QR Code instan untuk setiap shortlink.
-* **🛡️ Password Protection:** Kunci link sensitif dengan password.
-* **⚡ Public & Private Mode:** Buat link instan tanpa login (expired 3 hari) atau login untuk link permanen.
+## Teknologi
 
-## 🛠️ Tech Stack
-
-* **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
-* **Database:** PostgreSQL (via Prisma ORM)
-* **Cache & Rate Limit:** Redis (via Upstash atau Self-hosted)
-* **Styling:** Tailwind CSS v4 (CSS Variables)
-* **Auth:** JWT (JSON Web Tokens) & Bcrypt
+* **Framework:** Next.js 16 (App Router)
+* **Database:** PostgreSQL (Prisma ORM)
+* **Cache:** Redis (Rate limiting & caching)
+* **Styling:** Tailwind CSS v4
 * **Email:** Nodemailer (SMTP)
-* **Charts:** Recharts
-* **Icons:** Lucide React
 
-## ⚙️ Prasyarat
+## Instalasi (Self-Hosted)
 
-Sebelum memulai, pastikan Anda memiliki:
-* Node.js 20+
-* PostgreSQL Database
-* Redis Server (Lokal atau Cloud)
-* SMTP Server (untuk fitur email)
-
-## 🚀 Cara Install & Menjalankan (Local)
+Pastikan Anda memiliki Node.js 20+, PostgreSQL, dan Redis yang sudah berjalan.
 
 1.  **Clone Repository**
     ```bash
-    git clone [https://github.com/j58c/deaubit.git](https://github.com/j58c/deaubit.git)
+    git clone [https://github.com/username/deaubit.git](https://github.com/username/deaubit.git)
     cd deaubit
     ```
 
@@ -46,45 +35,35 @@ Sebelum memulai, pastikan Anda memiliki:
     pnpm install
     ```
 
-3.  **Setup Environment Variables**
-    Duplikasi file `.env.example` menjadi `.env` dan isi konfigurasi berikut:
-
+3.  **Konfigurasi Environment**
+    Salin file `.env.example` menjadi `.env` dan sesuaikan isinya:
     ```env
-    # --- DATABASE ---
     DATABASE_URL="postgresql://user:pass@localhost:5432/deaubit_db"
-    
-    # --- REDIS (Rate Limiting) ---
     KV_URL="redis://localhost:6379"
 
-    # --- APP CONFIG ---
-    # Ganti dengan domain asli saat produksi
     NEXT_PUBLIC_APP_HOST="localhost:3000"
     NEXT_PUBLIC_SHORT_HOST="localhost:3000"
     NEXT_PUBLIC_PROTOCOL="http"
 
-    # --- SECURITY ---
-    JWT_SECRET="rahasia_super_panjang_dan_acak"
-    CRON_SECRET="rahasia_untuk_cron_job"
+    JWT_SECRET="rahasia_jwt_anda"
+    CRON_SECRET="rahasia_cron_job"
 
-    # --- SMTP (Email) ---
     SMTP_HOST="smtp.provider.com"
     SMTP_PORT="587"
     SMTP_USER="email@domain.com"
     SMTP_PASS="password_smtp"
     SMTP_FROM="DeauBit <noreply@domain.com>"
+    ABUSE_REPORT_EMAIL="admin@domain.com"
     ```
 
 4.  **Setup Database**
     ```bash
-    # Generate Prisma Client
     pnpm prisma generate
-
-    # Push Schema ke DB
     pnpm prisma db push
     ```
 
-5.  **Jalankan Server Development**
+5.  **Jalankan Server**
     ```bash
     pnpm dev
     ```
-    Buka [http://localhost:3000](http://localhost:3000) di browser.
+    Akses aplikasi di `http://localhost:3000`.
