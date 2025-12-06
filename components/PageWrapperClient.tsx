@@ -21,12 +21,13 @@ export default function PageWrapperClient({
     "/verify", 
     "/forgot-password", 
     "/reset-password",
-    "/account-deleted"
+    "/account-deleted",
+    "/admin/delete"
   ].includes(pathname);
 
   const isSlugPage =
     segments.length === 1 &&
-    !["dash", "api", "login", "register", "verify", "forgot-password", "reset-password"].includes(segments[0]);
+    !["dash", "api", "login", "register", "verify", "forgot-password", "reset-password", "account-deleted", "admin"].includes(segments[0]);
 
   if (isSlugPage) {
     return (

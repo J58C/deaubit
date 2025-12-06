@@ -1,6 +1,7 @@
 //lib/mail.ts
 
 import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -181,7 +182,23 @@ export async function sendAbuseReportEmail(data: {
 }) {
   const adminEmail = process.env.ABUSE_REPORT_EMAIL || process.env.SMTP_USER;
   
-  const subject = `Link Report: ${new URL(data.linkUrl).pathname}`; 
+  let slug = "";
+  try {
+     const urlParts = new URL(data.linkUrl);
+     slug = urlParts.pathname.replace(/^\//, "");
+  } catch {}
+
+  const deleteToken = jwt.sign(
+    { slug, action: 'delete_abuse' }, 
+    process.env.JWT_SECRET!, 
+    { expiresIn: '7d' }
+  );
+
+  const appHost = process.env.NEXT_PUBLIC_APP_HOST || "localhost:3000";
+  const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "http";
+  const deleteLink = `${protocol}://${appHost}/admin/delete?slug=${slug}&token=${deleteToken}`;
+
+  const subject = `Link Report: ${slug || 'Unknown'}`; 
   
   const htmlContent = `
     <p><strong>New User Report</strong></p>
@@ -200,8 +217,13 @@ export async function sendAbuseReportEmail(data: {
        <p><strong>Reporter:</strong><br>
        ${data.reporter || "Anonymous"}</p>
     </div>
-    
-    <p style="font-size:12px; color:#666;">Login to dashboard to take action.</p>
+
+    <div style="text-align: center; margin-top: 30px;">
+        <p style="font-size:12px; margin-bottom:10px;">Is this link malicious?</p>
+        <a href="${deleteLink}" style="background-color: #ef4444; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+           ⚠️ DELETE LINK NOW
+        </a>
+    </div>
   `;
 
   return await transporter.sendMail({
