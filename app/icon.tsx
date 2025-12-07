@@ -13,21 +13,22 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 18,
-          background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)', 
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          background: 'linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%)',
+          border: '3px solid #000000',
+          borderRadius: '0px',
           color: 'white',
-          borderRadius: '8px',
+          fontSize: 20,
           fontWeight: 900,
           fontFamily: 'sans-serif',
-          textShadow: '1px 1px 0px rgba(0,0,0,0.2)', 
+          textShadow: '1px 1px 0px rgba(0,0,0,0.3)',
         }}
       >
-        dB
+        D
       </div>
     ),
     {
