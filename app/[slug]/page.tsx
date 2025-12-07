@@ -7,7 +7,7 @@ import SlugRedirector from "@/components/SlugRedirector";
 import PasswordGuard from "@/components/PasswordGuard";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import geoip from "geoip-lite";
+import { lookup } from "fast-geoip";
 import { AlertTriangle, ArrowLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -74,7 +74,8 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
 
         const parser = new UAParser(userAgent);
         const result = parser.getResult();
-        const geo = geoip.lookup(realIp);
+        
+        const geo = await lookup(realIp);
         
         await prisma.click.create({
           data: {

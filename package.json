@@ -3,24 +3,18 @@
   "version": "0.6.3",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env.local -- next dev",
-    "build": "dotenv -e .env.production -- prisma generate && next build",
-    "build:prod": "dotenv -e .env.production -c -- next build",
-    "prisma:generate:local": "dotenv -e .env.local -- prisma generate",
-    "prisma:generate:prod": "dotenv -e .env.production -- prisma generate",
-    "prisma:push:local": "dotenv -e .env.local -- prisma db push",
-    "prisma:push:prod": "dotenv -e .env.production -- prisma db push",
+    "dev": "next dev",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.1",
-    "@prisma/client": "^7.0.1",
-    "@types/geoip-lite": "^1.4.4",
+    "@prisma/client": "^7.1.0",
     "@types/ua-parser-js": "^0.7.39",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
-    "geoip-lite": "^1.4.10",
+    "fast-geoip": "^1.1.88",
     "ioredis": "^5.8.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
@@ -46,7 +40,7 @@
     "dotenv-cli": "^11.0.0",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.0.3",
-    "prisma": "^7.0.1",
+    "prisma": "^7.1.0",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3"
   }
