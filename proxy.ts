@@ -20,6 +20,10 @@ function isPublicPath(pathname: string): boolean {
     "/verify",
     "/forgot-password",
     "/reset-password",
+    "/account-deleted",
+    "/setup",
+    "/api/setup",
+    "/api/setup/status",
     "/api/login",
     "/api/logout",
     "/api/session",
@@ -29,9 +33,9 @@ function isPublicPath(pathname: string): boolean {
     "/api/auth/forgot-password",
     "/api/auth/reset-password",
     "/api/auth/resend-otp",
+    "/api/report",
     "/api/cron/cleanup",
-    "/admin/delete",
-    "/api/admin/delete",
+    "/api/admin/delete", 
     "/favicon.ico",
     "/robots.txt",
     "/sitemap.xml",
@@ -80,13 +84,13 @@ export default function proxy(req: NextRequest): NextResponse {
     pathname === "/login" || 
     pathname === "/register" ||
     pathname === "/forgot-password" ||
-    pathname === "/verify"
+    pathname === "/verify" ||
+    pathname === "/setup"
   )) {
     return NextResponse.redirect(new URL("/dash", req.url));
   }
 
   if (!authed && !isPublicPath(pathname)) {
-    
     const segments = pathname.split("/").filter(Boolean);
     const isShortlinkCandidate = segments.length === 1 && !RESERVED_SLUGS.has(segments[0]);
 

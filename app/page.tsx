@@ -18,8 +18,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     let cancelled = false;
-    async function checkSession() {
+
+    async function init() {
       try {
+        const setupRes = await fetch("/api/setup/status");
+        const setupData = await setupRes.json();
+        
+        if (!cancelled && !setupData.initialized) {
+            router.replace("/setup");
+            return;
+        }
+
         const res = await fetch("/api/session", { method: "GET", credentials: "include" });
         const data = await res.json();
         
@@ -27,11 +36,14 @@ export default function LoginPage() {
           router.replace(nextPath);
           return;
         }
-      } catch {} finally {
+      } catch (e) {
+        console.error(e);
+      } finally {
         if (!cancelled) setCheckingSession(false);
       }
     }
-    checkSession();
+
+    init();
     return () => { cancelled = true; };
   }, [router, nextPath]);
 

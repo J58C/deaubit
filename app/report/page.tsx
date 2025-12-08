@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import DeauBitLogo from "@/components/DeauBitLogo";
 import { AlertTriangle, Send, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
@@ -17,6 +17,19 @@ export default function ReportPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  
+  const [placeholder, setPlaceholder] = useState("https://...");
+
+  useEffect(() => {
+    const protocol = process.env.NEXT_PUBLIC_PROTOCOL || "https";
+    const host = process.env.NEXT_PUBLIC_SHORT_HOST || process.env.NEXT_PUBLIC_APP_HOST;
+    
+    if (host) {
+        setPlaceholder(`${protocol}://${host}/...`);
+    } else if (typeof window !== "undefined") {
+        setPlaceholder(`${window.location.origin}/...`);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,7 +100,7 @@ export default function ReportPage() {
                 <input 
                     type="url" 
                     className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-3 font-bold text-sm focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all"
-                    placeholder="https://deau.site/..."
+                    placeholder={placeholder}
                     value={formData.linkUrl}
                     onChange={e => setFormData({...formData, linkUrl: e.target.value})}
                     required

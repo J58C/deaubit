@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X, ArrowLeft, Check, Eye, EyeOff, ChevronDown, ChevronUp } from "lucide-react";
+import { User, Lock, Loader2, Save, Shield, Trash2, AlertTriangle, X, ArrowLeft, Check, Eye, EyeOff, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -27,14 +27,26 @@ export default function SettingsPage() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [deleteOtp, setDeleteOtp] = useState(""); 
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/session").then(r => r.json()).then(data => {
         if(data.user?.name) setName(data.user.name);
     });
   }, []);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+        const timer = setInterval(() => setResendCooldown(prev => prev - 1), 1000);
+        return () => clearInterval(timer);
+    }
+  }, [resendCooldown]);
 
   async function handleUpdateProfile(e: React.FormEvent) {
     e.preventDefault();
@@ -101,11 +113,22 @@ export default function SettingsPage() {
       const res = await fetch("/api/auth/delete-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: deletePassword }),
+        body: JSON.stringify({ 
+            password: deletePassword,
+            otp: showOtpInput ? deleteOtp : undefined
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.error || "Gagal menghapus akun");
+
+      if (data.requireOtp) {
+          setShowOtpInput(true);
+          setDeleteLoading(false);
+          setResendCooldown(60);
+          return;
+      }
 
       window.location.href = "/account-deleted"; 
     } catch (err) {
@@ -113,6 +136,29 @@ export default function SettingsPage() {
       setDeleteLoading(false);
     }
   }
+
+  async function handleResendDeleteCode() {
+    if (resendCooldown > 0) return;
+    setResendLoading(true);
+    try {
+        const res = await fetch("/api/auth/resend-delete-code", { method: "POST" });
+        if(!res.ok) throw new Error("Failed");
+        setResendCooldown(60);
+        alert("Verification code sent to email.");
+    } catch {
+        alert("Failed to resend code.");
+    } finally {
+        setResendLoading(false);
+    }
+  }
+
+  const closeDeleteModal = () => {
+      setShowDeleteModal(false);
+      setShowOtpInput(false);
+      setDeletePassword("");
+      setDeleteOtp("");
+      setDeleteError("");
+  };
 
   return (
     <div className="w-full max-w-4xl space-y-8 pb-20"> 
@@ -130,6 +176,7 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         
+        {/* --- PROFILE SECTION --- */}
         <div className="bg-[var(--db-surface)] border-2 lg:border-4 border-[var(--db-border)] shadow-[6px_6px_0px_0px_var(--db-border)] transition-all">
             <button 
                 onClick={() => setIsProfileExpanded(!isProfileExpanded)}
@@ -174,6 +221,7 @@ export default function SettingsPage() {
             )}
         </div>
 
+        {/* --- SECURITY SECTION --- */}
         <div className="bg-[var(--db-surface)] border-2 lg:border-4 border-[var(--db-border)] shadow-[6px_6px_0px_0px_var(--db-border)] transition-all">
             <button 
                 onClick={() => setIsSecurityExpanded(!isSecurityExpanded)}
@@ -287,7 +335,7 @@ export default function SettingsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in">
            <div className="w-full max-w-sm bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-6 shadow-[12px_12px_0px_0px_var(--db-danger)] relative">
               <button 
-                 onClick={() => setShowDeleteModal(false)} 
+                 onClick={closeDeleteModal} 
                  className="absolute top-3 right-3 border-2 border-[var(--db-border)] p-1 hover:bg-[var(--db-bg)] text-[var(--db-text)]"
               >
                  <X className="h-5 w-5" />
@@ -297,20 +345,58 @@ export default function SettingsPage() {
                  <div className="inline-block p-3 bg-[var(--db-danger)] border-4 border-[var(--db-border)] rounded-full mb-3 text-white shadow-[4px_4px_0px_0px_var(--db-border)]">
                     <Trash2 className="h-6 w-6" />
                  </div>
-                 <h2 className="text-2xl font-black uppercase leading-none text-[var(--db-text)] mb-2">FINAL WARNING</h2>
-                 <p className="font-bold text-[var(--db-text-muted)] text-xs">Enter your password to confirm deletion.</p>
+                 <h2 className="text-2xl font-black uppercase leading-none text-[var(--db-text)] mb-2">
+                    {showOtpInput ? "SECURITY CHECK" : "FINAL WARNING"}
+                 </h2>
+                 <p className="font-bold text-[var(--db-text-muted)] text-xs">
+                    {showOtpInput 
+                        ? "Enter the confirmation code sent to your email to authorize DESTRUCTION." 
+                        : "Enter your password to confirm deletion."}
+                 </p>
               </div>
 
               <form onSubmit={handleDeleteAccount} className="space-y-4">
                  <input 
                     type="password" 
-                    className="w-full bg-[var(--db-bg)] border-4 border-[var(--db-border)] p-3 font-bold text-center text-base text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]"
+                    className="w-full bg-[var(--db-bg)] border-4 border-[var(--db-border)] p-3 font-bold text-center text-base text-[var(--db-text)] focus:outline-none focus:shadow-[6px_6px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)] disabled:opacity-50"
                     placeholder="YOUR PASSWORD" 
                     value={deletePassword}
                     onChange={(e) => setDeletePassword(e.target.value)}
-                    autoFocus
+                    autoFocus={!showOtpInput}
+                    disabled={showOtpInput} 
                     required
                  />
+
+                 {showOtpInput && (
+                     <div className="animate-in slide-in-from-top-2 fade-in space-y-3">
+                         <input 
+                            type="text" 
+                            className="w-full bg-[var(--db-bg)] border-4 border-[var(--db-border)] p-3 font-mono font-bold text-center text-xl tracking-widest text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-danger)] transition-all placeholder:text-[var(--db-text-muted)]"
+                            placeholder="000000" 
+                            value={deleteOtp}
+                            onChange={(e) => setDeleteOtp(e.target.value.replace(/\D/g,""))}
+                            maxLength={6}
+                            autoFocus
+                            required
+                         />
+                         
+                         <div className="text-center">
+                            <button 
+                                type="button" 
+                                onClick={handleResendDeleteCode}
+                                disabled={resendCooldown > 0 || resendLoading}
+                                className="text-[10px] font-bold text-[var(--db-text-muted)] hover:text-red-500 flex items-center justify-center gap-1 mx-auto disabled:opacity-50 transition-colors"
+                            >
+                                {resendLoading ? (
+                                    <Loader2 className="h-3 w-3 animate-spin"/>
+                                ) : (
+                                    <RefreshCw className={`h-3 w-3 ${resendCooldown === 0 ? "hover:rotate-180 transition-transform" : ""}`}/>
+                                )}
+                                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend Code"}
+                            </button>
+                         </div>
+                     </div>
+                 )}
 
                  {deleteError && (
                     <div className="bg-[var(--db-danger)] text-white font-bold p-2 border-2 border-[var(--db-border)] text-center uppercase text-xs">
@@ -321,7 +407,7 @@ export default function SettingsPage() {
                  <div className="flex gap-2 pt-2">
                     <button 
                        type="button"
-                       onClick={() => setShowDeleteModal(false)}
+                       onClick={closeDeleteModal}
                        className="flex-1 py-3 font-black border-4 border-[var(--db-border)] text-[var(--db-text)] hover:bg-[var(--db-bg)] uppercase text-xs"
                     >
                        Cancel
@@ -331,7 +417,7 @@ export default function SettingsPage() {
                        disabled={deleteLoading}
                        className="flex-1 py-3 font-black bg-[var(--db-danger)] text-white border-4 border-[var(--db-border)] hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all uppercase flex justify-center items-center gap-2 text-xs"
                     >
-                       {deleteLoading ? <Loader2 className="animate-spin h-4 w-4"/> : "CONFIRM DELETE"}
+                       {deleteLoading ? <Loader2 className="animate-spin h-4 w-4"/> : (showOtpInput ? "NUKE DATABASE" : "CONFIRM DELETE")}
                     </button>
                  </div>
               </form>

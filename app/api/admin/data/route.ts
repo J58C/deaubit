@@ -1,0 +1,53 @@
+//app/api/admin/data/route.ts
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { verifyUserJWT, SESSION_COOKIE_NAME } from "@/lib/auth";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(req: NextRequest) {
+  try {
+    const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
+    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const user = verifyUserJWT(token);
+    if (!user || user.role !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden: Admin access only" }, { status: 403 });
+    }
+
+    const reports = await prisma.report.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+            shortLink: {
+                select: { slug: true, targetUrl: true }
+            }
+        },
+        take: 50
+    });
+
+    const publicLinks = await prisma.shortLink.findMany({
+        where: { userId: null },
+        orderBy: { createdAt: "desc" },
+        take: 50
+    });
+
+    const totalUsers = await prisma.user.count();
+    const totalLinks = await prisma.shortLink.count();
+    const totalReports = await prisma.report.count({ where: { status: "PENDING" } });
+
+    return NextResponse.json({
+        reports,
+        publicLinks,
+        stats: {
+            totalUsers,
+            totalLinks,
+            pendingReports: totalReports
+        }
+    });
+
+  } catch (error) {
+    console.error("Admin Data Error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

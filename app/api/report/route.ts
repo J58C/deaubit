@@ -1,6 +1,7 @@
 //app/api/report/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { sendAbuseReportEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { sanitizeAndValidateUrl, sanitizeInput } from "@/lib/validation";
@@ -27,12 +28,52 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Invalid URL format." }, { status: 400 });
     }
 
-    await sendAbuseReportEmail({
-        linkUrl: validUrl,
-        reason: sanitizeInput(reason),
-        details: sanitizeInput(details || ""),
-        reporter: sanitizeInput(contact || "")
+    const urlObj = new URL(validUrl);
+    const appHost = process.env.NEXT_PUBLIC_APP_HOST?.split(":")[0];
+    const shortHost = process.env.NEXT_PUBLIC_SHORT_HOST?.split(":")[0];
+    const reportedHost = urlObj.hostname;
+
+    if (appHost && shortHost && !reportedHost.includes(appHost) && !reportedHost.includes(shortHost)) {
+    }
+
+    const slug = urlObj.pathname.replace(/^\//, "");
+
+    if (!slug) {
+        return NextResponse.json({ error: "No slug found in URL." }, { status: 400 });
+    }
+
+    const shortLink = await prisma.shortLink.findUnique({
+        where: { slug }
     });
+
+    if (!shortLink) {
+        return NextResponse.json({ error: "Link not found in our system." }, { status: 404 });
+    }
+
+    await prisma.report.create({
+        data: {
+            shortLinkId: shortLink.id,
+            reason: sanitizeInput(reason),
+            details: sanitizeInput(details || ""),
+            contact: sanitizeInput(contact || ""),
+            status: "PENDING"
+        }
+    });
+
+    const adminUser = await prisma.user.findFirst({
+        where: { role: "ADMIN" },
+        select: { email: true }
+    });
+
+    if (adminUser?.email) {
+        await sendAbuseReportEmail({
+            linkUrl: validUrl,
+            reason: sanitizeInput(reason),
+            details: sanitizeInput(details || ""),
+            reporter: sanitizeInput(contact || ""),
+            adminEmail: adminUser.email
+        });
+    }
 
     return NextResponse.json({ success: true });
 

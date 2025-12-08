@@ -18,6 +18,7 @@ export interface PublicLinkResponse extends ApiResponse {
 export interface SessionResponse extends ApiResponse {
     authenticated: boolean;
     username?: string;
+    role?: string; 
 }
 
 export interface LoginFormData {
@@ -34,21 +35,6 @@ export interface ShortlinkResult {
     shortUrl: string;
 }
 
-export interface ShortlinkData {
-    id: string;
-    slug: string;
-    targetUrl: string;
-    createdAt: Date;
-}
-
-export interface AdminJwtPayload {
-    username: string;
-    role: "admin";
-    iat?: number;
-    exp?: number;
-}
-
-export interface RateLimitResult {
-    allowed: boolean;
-    retryAfter?: number;
+export interface SetupStatusResponse {
+    initialized: boolean;
 }

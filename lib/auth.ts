@@ -15,9 +15,10 @@ export interface UserJwtPayload extends JwtPayload {
   id: string;
   email: string;
   name: string;
+  role: string;
 }
 
-export function signUserJWT(payload: { id: string; email: string; name: string }): string {
+export function signUserJWT(payload: { id: string; email: string; name: string; role: string }): string {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: SESSION_MAX_AGE,
   });

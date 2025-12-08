@@ -4,11 +4,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Settings, LogOut, ChevronDown } from "lucide-react";
+import { Settings, LogOut, ChevronDown, ShieldAlert } from "lucide-react";
 
-interface UserMenuProps { username?: string; }
+interface UserMenuProps { 
+    username?: string; 
+    role?: string;
+}
 
-export default function UserMenu({ username = "User" }: UserMenuProps) {
+export default function UserMenu({ username = "User", role = "USER" }: UserMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -36,16 +39,31 @@ export default function UserMenu({ username = "User" }: UserMenuProps) {
         </div>
         <div className="flex flex-col items-start leading-none hidden sm:flex">
           <span className="font-bold text-sm truncate max-w-[120px] text-[var(--db-text)]">{username}</span>
-          <span className="text-[10px] font-bold text-green-600 bg-green-100 px-1 border border-[var(--db-border)] mt-0.5">VERIFIED</span>
+          {role === "ADMIN" ? (
+             <span className="text-[10px] font-black text-red-600 bg-red-100 px-1 border border-red-200 mt-0.5">ADMIN</span>
+          ) : (
+             <span className="text-[10px] font-bold text-green-600 bg-green-100 px-1 border border-[var(--db-border)] mt-0.5">VERIFIED</span>
+          )}
         </div>
         <ChevronDown className={`h-4 w-4 transition-transform border-2 border-[var(--db-border)] p-0.5 bg-[var(--db-bg)] text-[var(--db-text)] ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[8px_8px_0px_0px_var(--db-border)] p-2 z-50">
+        <div className="absolute right-0 mt-2 w-56 bg-[var(--db-surface)] border-4 border-[var(--db-border)] shadow-[8px_8px_0px_0px_var(--db-border)] p-2 z-50 animate-in fade-in slide-in-from-top-2">
           <div className="px-2 py-2 mb-2 border-b-2 border-[var(--db-border)] sm:hidden">
              <span className="font-bold text-sm block truncate text-[var(--db-text)]">{username}</span>
           </div>
+          
+          {role === "ADMIN" && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-3 px-3 py-3 font-black text-sm text-red-600 hover:bg-red-50 hover:translate-x-1 transition-transform border-b-2 border-[var(--db-border)] mb-1"
+                onClick={() => setIsOpen(false)}
+              >
+                <ShieldAlert className="h-4 w-4" /> ADMIN DASHBOARD
+              </Link>
+          )}
+
           <Link
             href="/dash/settings"
             className="flex items-center gap-3 px-3 py-3 font-bold text-sm text-[var(--db-text)] hover:bg-[var(--db-bg)] hover:translate-x-1 transition-transform border-b-2 border-[var(--db-surface-muted)]"
@@ -55,7 +73,7 @@ export default function UserMenu({ username = "User" }: UserMenuProps) {
           </Link>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-3 font-bold text-sm text-red-600 hover:bg-red-50 hover:translate-x-1 transition-transform"
+            className="w-full flex items-center gap-3 px-3 py-3 font-bold text-sm text-[var(--db-danger)] hover:bg-red-50 hover:translate-x-1 transition-transform"
           >
             <LogOut className="h-4 w-4" /> SIGN OUT
           </button>

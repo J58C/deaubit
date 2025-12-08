@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
   const newToken = signUserJWT({
     id: payload.id,
     email: payload.email,
-    name: payload.name
+    name: payload.name,
+    role: payload.role 
   });
 
   const res = NextResponse.json({
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
       id: payload.id,
       email: payload.email,
       name: payload.name,
+      role: payload.role
     },
   });
 

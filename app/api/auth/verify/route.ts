@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { sendWelcomeEmail, sendAdminWelcomeEmail } from "@/lib/mail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,14 +24,15 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({
       where: { email },
-      data: {
-        verifiedAt: new Date(),
-        otpSecret: null,
-      },
+      data: { verifiedAt: new Date(), otpSecret: null },
     });
 
     try {
-        await sendWelcomeEmail(user.email, user.name || "User");
+        if (user.role === "ADMIN") {
+            await sendAdminWelcomeEmail(user.email, user.name || "Admin");
+        } else {
+            await sendWelcomeEmail(user.email, user.name || "User");
+        }
     } catch (e) {
         console.error("Gagal kirim welcome email:", e);
     }

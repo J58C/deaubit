@@ -8,11 +8,17 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id            String      @id @default(cuid())
   name          String?
   email         String      @unique
   password      String
+  role          Role        @default(USER)
   createdAt     DateTime    @default(now())
   
   links         ShortLink[]
@@ -37,6 +43,7 @@ model ShortLink {
   user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   clicks    Click[]
+  reports   Report[]
 }
 
 model Click {
@@ -53,5 +60,19 @@ model Click {
 
   shortLink   ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
   
+  @@index([shortLinkId])
+}
+
+model Report {
+  id          String    @id @default(cuid())
+  shortLinkId String
+  shortLink   ShortLink @relation(fields: [shortLinkId], references: [id], onDelete: Cascade)
+  
+  reason      String
+  details     String?
+  contact     String?
+  status      String    @default("PENDING") // PENDING, RESOLVED, IGNORED
+  createdAt   DateTime  @default(now())
+
   @@index([shortLinkId])
 }

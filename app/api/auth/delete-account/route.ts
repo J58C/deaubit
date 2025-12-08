@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
-import { sendAccountDeletedEmail } from "@/lib/mail";
+import { sendAccountDeletedEmail, sendAdminDeletionCodeEmail, sendAdminGoodbyeEmail } from "@/lib/mail";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
     const payload = verifyUserJWT(token);
     if (!payload) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const { password } = await req.json();
-    if (!password) return NextResponse.json({ error: "Password wajib diisi untuk konfirmasi" }, { status: 400 });
+    const { password, otp } = await req.json();
+    if (!password) return NextResponse.json({ error: "Password wajib diisi" }, { status: 400 });
 
     const user = await prisma.user.findUnique({ where: { id: payload.id } });
     if (!user) return NextResponse.json({ error: "User tidak ditemukan" }, { status: 404 });
@@ -23,20 +23,40 @@ export async function POST(req: NextRequest) {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return NextResponse.json({ error: "Password salah" }, { status: 401 });
 
-    const userEmail = user.email;
-    const userName = user.name || "User";
+    if (user.role === 'ADMIN') {
+        
+        if (!otp) {
+            const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { otpSecret: newOtp }
+            });
+            
+            await sendAdminDeletionCodeEmail(user.email, newOtp);
+            
+            return NextResponse.json({ requireOtp: true, message: "OTP Sent" });
+        } 
+        else {
+            if (user.otpSecret !== otp) {
+                return NextResponse.json({ error: "Kode konfirmasi salah!" }, { status: 400 });
+            }
 
-    await prisma.user.delete({ where: { id: user.id } });
+            console.log("[ADMIN] Performing Full Database Reset...");
+            await prisma.report.deleteMany({});
+            await prisma.click.deleteMany({});
+            await prisma.shortLink.deleteMany({});
+            await prisma.user.deleteMany({});
 
-    try {
-        await sendAccountDeletedEmail(userEmail, userName);
-    } catch (e) {
-        console.error("Gagal kirim delete email:", e);
+            try { await sendAdminGoodbyeEmail(user.email, user.name || "Admin"); } catch {}
+        }
+
+    } else {
+        await prisma.user.delete({ where: { id: user.id } });
+        try { await sendAccountDeletedEmail(user.email, user.name || "User"); } catch {}
     }
 
     const res = NextResponse.json({ success: true });
     res.cookies.delete(SESSION_COOKIE_NAME);
-    
     return res;
 
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendVerificationEmail } from "@/lib/mail";
+import { sendVerificationEmail, sendAdminVerificationEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
       data: { otpSecret: newOtp },
     });
 
-    await sendVerificationEmail(email, newOtp);
+    if (user.role === "ADMIN") {
+        await sendAdminVerificationEmail(email, newOtp);
+    } else {
+        await sendVerificationEmail(email, newOtp);
+    }
 
     return NextResponse.json({ message: "Kode baru telah dikirim." }, { status: 200 });
 

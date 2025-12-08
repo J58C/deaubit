@@ -1,4 +1,4 @@
-// app/api/links/[slug]/route.ts
+//app/api/links/[slug]/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -34,7 +34,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Shortlink tidak ditemukan." }, { status: 404 });
     }
 
-    if (existing.userId !== user.id) {
+    const isAdmin = user.role === "ADMIN";
+    const isOwner = existing.userId === user.id;
+
+    if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "Forbidden: Bukan pemilik link." }, { status: 403 });
     }
 
@@ -73,6 +76,7 @@ export async function PATCH(
     });
 
     if (!existing) return NextResponse.json({ error: "Link not found" }, { status: 404 });
+    
     if (existing.userId !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const updateData: any = {};
