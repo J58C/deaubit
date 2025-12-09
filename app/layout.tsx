@@ -1,96 +1,73 @@
 //app/layout.tsx
 
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import PageWrapperClient from "@/components/PageWrapperClient";
-import Script from "next/script";
-import { cookies } from "next/headers";
-import { use } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "DeauBit · URL Shortener",
-  description: "DeauBit - elegant self-hosted URL shortener by deauport.",
+export const viewport: Viewport = {
+  themeColor: "#4f46e5",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
-const THEME_COOKIE_NAME = "deaubit_theme";
+export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_HOST ? `https://${process.env.NEXT_PUBLIC_APP_HOST}` : "http://localhost:3000"),
+  title: {
+    default: "DeauBit | Elegant URL Shortener",
+    template: "%s | DeauBit",
+  },
+  description: "Self-hosted, privacy-focused URL shortener with heavy industrial design. No tracking, just links.",
+  keywords: ["url shortener", "link management", "self-hosted", "privacy", "deaubit"],
+  authors: [{ name: "Deauport", url: "https://deau.site" }],
+  creator: "Deauport",
+  
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    title: "DeauBit - The Brutalist Shortener",
+    description: "Shorten your links with style. Privacy-first, analytics-included, zero-bullshit.",
+    siteName: "DeauBit",
+    images: [
+      {
+        url: "/api/og",
+        width: 1200,
+        height: 630,
+        alt: "DeauBit Interface",
+      },
+    ],
+  },
 
-function getRootDomainFromEnv(): string | null {
-  const base = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!base) return null;
+  twitter: {
+    card: "summary_large_image",
+    title: "DeauBit | Shorten Boldly",
+    description: "Privacy-focused URL shortener for the modern web.",
+    creator: "@deauport",
+    images: ["/api/og"],
+  },
 
-  try {
-    const host = new URL(base).hostname;
-    const parts = host.split(".");
-    if (parts.length < 2) return host;
-    return parts.slice(-2).join(".");
-  } catch {
-    return null;
-  }
-}
+  icons: {
+    icon: "/icon",
+    shortcut: "/icon",
+    apple: "/icon",
+  },
+};
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const cookieStore = use(cookies());
-  const cookieTheme = cookieStore.get(THEME_COOKIE_NAME)?.value;
-
-  const initialTheme =
-    cookieTheme === "dark" || cookieTheme === "light"
-      ? cookieTheme
-      : undefined;
-
-  const rootDomain = getRootDomainFromEnv();
-  const cookieDomainPart = rootDomain ? `; domain=.${rootDomain}` : "";
-
+}>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${initialTheme === "dark" ? "dark" : ""} ${geistSans.variable} ${geistMono.variable}`}
-    >
-      <head>
-        <Script id="deau-theme-init" strategy="beforeInteractive">
-          {`(function() {
-            try {
-              var themeCookieName = '${THEME_COOKIE_NAME}';
-              var cookieMatch = document.cookie.match(new RegExp('(?:^|; )' + themeCookieName + '=(dark|light)'));
-              var cookieTheme = cookieMatch ? cookieMatch[1] : null;
-              var stored = null;
-              try { stored = window.localStorage.getItem('theme'); } catch(e) {}
-              var storedTheme = (stored === 'dark' || stored === 'light') ? stored : null;
-              var prefersDark = false;
-              try { prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches; } catch(e) {}
-              var theme = cookieTheme || storedTheme || (prefersDark ? 'dark' : 'light');
-
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-              } else {
-                document.documentElement.classList.remove('dark');
-              }
-              
-              try {
-                document.cookie = themeCookieName + '=; path=/; max-age=0; SameSite=Lax';
-                document.cookie = themeCookieName + '=' + theme + '; path=/; max-age=31536000; SameSite=Lax${cookieDomainPart}';
-              } catch(e) {}
-            } catch(e) {}
-          })();`}
-        </Script>
-      </head>
-
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${mono.variable} antialiased font-sans bg-[var(--db-bg)] text-[var(--db-text)] selection:bg-[var(--db-primary)] selection:text-white`}
+      >
         <PageWrapperClient>{children}</PageWrapperClient>
       </body>
     </html>
