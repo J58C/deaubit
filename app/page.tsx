@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Zap } from "lucide-react";
 import DeauBitLogo from "@/components/DeauBitLogo";
@@ -10,7 +10,7 @@ import LoginForm from "@/components/LoginForm";
 import PublicShortlinkForm from "@/components/PublicShortlinkForm";
 import Link from "next/link";
 
-export default function LoginPage() {
+function HomeContent() {
   const [checkingSession, setCheckingSession] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -129,5 +129,24 @@ export default function LoginPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-[var(--db-bg)] z-50">
+          <div className="border-4 border-[var(--db-border)] bg-[var(--db-surface)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] flex flex-col items-center gap-4">
+            <DeauBitLogo size={48} />
+            <div className="flex items-center gap-2 font-bold text-xl uppercase tracking-widest text-[var(--db-text)]">
+              <Loader2 className="h-6 w-6 animate-spin" /> Loading...
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -1,8 +1,8 @@
-//app/login/page.tsx
+// app/login/page.tsx
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Link2,
@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import DeauBitLogo from "@/components/DeauBitLogo";
 
-export default function LoginPage() {
+function LoginContent() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -319,5 +319,19 @@ export default function LoginPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense 
+      fallback={
+        <div className="fixed inset-0 flex items-center justify-center bg-[var(--db-bg)]">
+          <Loader2 className="h-10 w-10 animate-spin text-[var(--db-text-muted)]" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }
