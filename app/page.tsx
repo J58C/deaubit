@@ -21,7 +21,11 @@ function HomeContent() {
 
     async function init() {
       try {
-        const setupRes = await fetch("/api/setup/status");
+        // ⚡ Bolt: Parallelize setup check and session check to avoid waterfall
+        const setupReq = fetch("/api/setup/status");
+        const sessionReq = fetch("/api/session", { method: "GET", credentials: "include" });
+
+        const setupRes = await setupReq;
         const setupData = await setupRes.json();
         
         if (!cancelled && !setupData.initialized) {
@@ -29,7 +33,7 @@ function HomeContent() {
             return;
         }
 
-        const res = await fetch("/api/session", { method: "GET", credentials: "include" });
+        const res = await sessionReq;
         const data = await res.json();
         
         if (!cancelled && data.authenticated) {
