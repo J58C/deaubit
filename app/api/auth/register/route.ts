@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/mail";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -18,7 +19,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, cfTurnstile } = await req.json();
+
+    const isHuman = await verifyTurnstileToken(cfTurnstile || "");
+    if (!isHuman) {
+        return NextResponse.json({ error: "Verifikasi keamanan gagal. Silakan refresh halaman." }, { status: 400 });
+    }
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email dan password wajib diisi." }, { status: 400 });

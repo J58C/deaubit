@@ -1,6 +1,6 @@
 {
   "name": "deaubit",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.4.1",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^7.1.0",
     "@types/ua-parser-js": "^0.7.39",
@@ -17,7 +18,7 @@
     "fast-geoip": "^1.1.88",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.553.0",
-    "next": "16.0.7",
+    "next": "^16.1.1",
     "nodemailer": "^7.0.11",
     "pg": "^8.16.3",
     "qrcode.react": "^4.2.0",

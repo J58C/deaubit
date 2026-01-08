@@ -1,6 +1,7 @@
 // app/[slug]/page.tsx
 
 import { prisma } from "@/lib/prisma";
+import { getShortLink } from "@/lib/db/shortlink";
 import Link from "next/link";
 import SlugRedirector from "@/components/SlugRedirector";
 import PasswordGuard from "@/components/PasswordGuard";
@@ -17,9 +18,7 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
   
-  const link = await prisma.shortLink.findFirst({ 
-    where: { OR: [{ slug }, { id: slug }] } 
-  });
+  const link = await getShortLink(slug);
 
   const ErrorCard = ({ title, msg }: { title: string, msg: string }) => (
     <div className="min-h-screen w-full flex items-center justify-center px-4 bg-[var(--db-bg)]">

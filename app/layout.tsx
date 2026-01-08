@@ -18,7 +18,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_HOST ? `https://${process.env.NEXT_PUBLIC_APP_HOST}` : "http://localhost:3000"),
   title: {
-    default: "DeauBit | Elegant URL Shortener",
+    default: "DeauBit",
     template: "%s | DeauBit",
   },
   description: "Self-hosted, privacy-focused URL shortener with heavy industrial design. No tracking, just links.",

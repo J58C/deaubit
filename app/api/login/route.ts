@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { signUserJWT, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/auth";
 import { isLoginBlocked, registerFailedLogin } from "@/lib/loginRateLimit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -14,7 +15,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
   }
 
-  const { email, password } = (body || {}) as { email?: string; password?: string };
+  const { email, password, cfTurnstile } = (body || {}) as { email?: string; password?: string, cfTurnstile?: string };
+
+  const isHuman = await verifyTurnstileToken(cfTurnstile || "");
+  if (!isHuman) {
+      return NextResponse.json({ error: "Verifikasi keamanan gagal (Captcha Invalid)." }, { status: 400 });
+  }
 
   if (!email || !password) {
     return NextResponse.json({ error: "Email dan password wajib diisi." }, { status: 400 });

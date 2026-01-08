@@ -2,10 +2,11 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Loader2, Mail, Eye, EyeOff, Terminal } from "lucide-react";
 import type { LoginResponse } from "@/types";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 interface LoginFormProps {
     nextPath?: string;
@@ -18,6 +19,11 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [cooldown, setCooldown] = useState<number | null>(null);
+    const [turnstileToken, setTurnstileToken] = useState("");
+
+    const turnstileRef = useRef<TurnstileInstance>(null);
+
+    const isTurnstileDone = !!turnstileToken;
 
     useEffect(() => {
         if (cooldown === null) return;
@@ -26,30 +32,53 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
         return () => clearInterval(id);
     }, [cooldown]);
 
+    const resetTurnstile = () => {
+        setTurnstileToken("");
+        turnstileRef.current?.reset();
+    };
+
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (cooldown !== null && cooldown > 0) return;
+        
+        if (!turnstileToken) {
+            setError("Please complete the security verification.");
+            return;
+        }
+
         setLoading(true); setError(null);
 
         try {
             const res = await fetch("/api/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ 
+                    email, 
+                    password,
+                    cfTurnstile: turnstileToken
+                }),
             });
             const data: LoginResponse = await res.json().catch(() => ({}));
 
             if (res.status === 429) {
                 const retry = typeof data.retryAfter === "number" ? data.retryAfter : 60;
                 setCooldown(retry);
-                setError(`Terlalu banyak percobaan. Tunggu ${retry}s.`);
+                setError(`Too many attempts. Wait ${retry}s.`);
+                
+                resetTurnstile();
                 return;
             }
-            if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Login gagal");
+            
+            if (!res.ok) {
+                resetTurnstile();
+                throw new Error(typeof data.error === "string" ? data.error : "Login failed");
+            }
             
             window.location.href = nextPath;
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Login gagal");
+            setError(err instanceof Error ? err.message : "Login failed");
+            resetTurnstile();
+        } finally {
             setLoading(false);
         }
     }
@@ -83,6 +112,7 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
+                                disabled={!isTurnstileDone && !loading}
                             />
                             <Mail className="absolute right-4 top-3.5 h-5 w-5 text-[var(--db-text-muted)] pointer-events-none" />
                         </div>
@@ -105,36 +135,58 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
+                                disabled={!isTurnstileDone && !loading}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-4 top-3.5 text-[var(--db-text-muted)] hover:text-[var(--db-text)] hover:scale-110 transition-transform cursor-pointer"
+                                disabled={!isTurnstileDone && !loading}
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                     </div>
 
-                    {error && (
-                        <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] flex items-center gap-2">
+                    <div 
+                        className={`transition-all duration-500 ease-in-out overflow-hidden flex justify-center transform origin-top
+                            ${isTurnstileDone ? 'max-h-0 opacity-0 scale-95 pointer-events-none py-0' : 'max-h-[100px] opacity-100 scale-100 py-2'}`}
+                    >
+                        <Turnstile 
+                            ref={turnstileRef}
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                            onSuccess={(token) => setTurnstileToken(token)}
+                            onError={() => setError("Failed to load security verification. Refresh the page.")}
+                            onExpire={() => setTurnstileToken("")}
+                            options={{ size: 'normal', theme: 'light' }}
+                        />
+                    </div>
+
+                    <div 
+                        className={`transition-all duration-500 ease-in-out overflow-hidden transform origin-bottom
+                            ${!isTurnstileDone ? 'max-h-0 opacity-0 scale-95 pointer-events-none' : 'max-h-[100px] opacity-100 scale-100'}`}
+                    >
+                        <button
+                            type="submit"
+                            disabled={loading || (cooldown !== null && cooldown > 0)}
+                            className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] border-2 border-[var(--db-border)] py-4 font-black text-lg uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin h-5 w-5"/> Loading...</span>
+                            ) : cooldown ? (
+                                `Wait (${cooldown}s)`
+                            ) : (
+                                "LOGIN NOW"
+                            )}
+                        </button>
+                    </div>
+                    
+                     {error && (
+                        <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             <span>❌</span> {error}
                         </div>
                     )}
 
-                    <button
-                        type="submit"
-                        disabled={loading || (cooldown !== null && cooldown > 0)}
-                        className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] border-2 border-[var(--db-border)] py-4 font-black text-lg uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {loading ? (
-                            <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin h-5 w-5"/> Loading...</span>
-                        ) : cooldown ? (
-                            `Tunggu (${cooldown}s)`
-                        ) : (
-                            "MASUK SEKARANG"
-                        )}
-                    </button>
                 </form>
 
                 <div className="mt-8 text-center pt-6 border-t-4 border-[var(--db-border)] border-dotted">

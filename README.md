@@ -1,6 +1,6 @@
 # DeauBit
 
-DeauBit adalah aplikasi URL shortener self-hosted yang modern dan berfokus pada privasi. Dibangun dengan Next.js, PostgreSQL, dan Redis untuk kinerja tinggi.
+DeauBit adalah aplikasi URL shortener self-hosted yang modern dan berfokus pada privasi. Dibangun dengan Next.js dan PostgreSQL.
 
 ## Fitur
 
@@ -10,45 +10,45 @@ DeauBit adalah aplikasi URL shortener self-hosted yang modern dan berfokus pada 
 - **QR Code:** Generate QR Code otomatis untuk setiap tautan.
 - **Password Protection:** Opsi mengunci tautan dengan kata sandi.
 - **Expiry Date:** Mengatur tanggal kadaluarsa untuk tautan.
-- **Rate Limiting:** Perlindungan anti-spam menggunakan Redis.
+- **Rate Limiting:** Perlindungan anti-spam ringan menggunakan *In-Memory Map*.
+- **Bot Protection:** Integrasi Cloudflare Turnstile untuk mencegah bot pada halaman Login & Register.
 - **Setup Wizard:** Halaman instalasi awal untuk membuat akun admin.
 
 ## Teknologi
 
+- **Runtime:** Bun
 - **Framework:** Next.js 16 (App Router)
 - **Database:** PostgreSQL (Prisma ORM)
-- **Cache:** Redis
+- **Security:** Cloudflare Turnstile
 - **Styling:** Tailwind CSS v4
 - **Email:** Nodemailer (SMTP)
 
 ## Prasyarat
 
 Pastikan server Anda memiliki:
-- Node.js v20+
-- PostgreSQL Database
-- Redis Server
+- **Node.js**
+- **PostgreSQL Database**
 
 ## Instalasi
 
 1.  **Clone Repository**
     ```bash
-    git clone https://github.com/username/deaubit.git
+    git clone https://github.com/j58c/deaubit.git
     cd deaubit
     ```
 
 2.  **Install Dependencies**
+    Menggunakan Bun package manager:
     ```bash
-    pnpm install
-    # atau npm install
+    npm install
     ```
 
 3.  **Konfigurasi Environment**
     Salin `.env.example` ke `.env` dan sesuaikan isinya:
 
     ```env
-    # Database & Redis
+    # Database
     DATABASE_URL="postgresql://user:pass@localhost:5432/deaubit_db"
-    KV_URL="redis://localhost:6379"
 
     # App Config
     NEXT_PUBLIC_APP_HOST="localhost:3000"
@@ -56,9 +56,13 @@ Pastikan server Anda memiliki:
     NEXT_PUBLIC_PROTOCOL="http"
     NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
-    # Security (Wajib diganti)
+    # Security (Wajib diganti dengan string acak)
     JWT_SECRET="rahasia_jwt_panjang_acak"
     CRON_SECRET="rahasia_cron_job"
+    
+    # Cloudflare Turnstile (Wajib untuk Login/Register)
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY="<SITE_KEY_DARI_CLOUDFLARE>"
+    TURNSTILE_SECRET_KEY="<SECRET_KEY_DARI_CLOUDFLARE>"
 
     # SMTP Email (Wajib untuk OTP & Reset Password)
     SMTP_HOST="smtp.provider.com"
@@ -72,15 +76,22 @@ Pastikan server Anda memiliki:
     ```
 
 4.  **Setup Database**
+    Generate client Prisma untuk runtime Bun:
     ```bash
-    pnpm prisma generate
-    pnpm prisma db push
+    npx prisma generate
+    npx prisma db push
     ```
 
 5.  **Jalankan Server**
+    Untuk pengembangan (Development):
     ```bash
-    pnpm dev
-    # atau pnpm start (untuk production setelah build)
+    npm dev
+    ```
+
+    Untuk produksi (Production):
+    ```bash
+    npm run build
+    npm run start
     ```
 
 ## Setup Admin

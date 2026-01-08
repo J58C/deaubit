@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { revalidateTag } from "next/cache"; 
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { sanitizeAndValidateUrl } from "@/lib/validation";
@@ -43,6 +44,8 @@ export async function DELETE(
     await prisma.shortLink.delete({
       where: { id: existing.id },
     });
+
+    revalidateTag(`shortlink:${existing.slug}`, { expire: 0 });
 
     return NextResponse.json({ ok: true });
 
@@ -96,6 +99,8 @@ export async function PATCH(
       where: { id: existing.id },
       data: updateData,
     });
+
+    revalidateTag(`shortlink:${existing.slug}`, { expire: 0 });
 
     return NextResponse.json(updatedLink);
 

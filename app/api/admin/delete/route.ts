@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis";
+import { revalidateTag } from "next/cache";
 import jwt from "jsonwebtoken";
 
 export async function POST(req: NextRequest) {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         where: { id: existing.id }
     });
 
-    await redis.del(`shortlink:${slug}`);
+    revalidateTag(`shortlink:${slug}`, { expire: 0 });
 
     return NextResponse.json({ success: true });
 
