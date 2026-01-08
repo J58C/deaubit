@@ -3,10 +3,11 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Link2 } from "lucide-react";
+import { Loader2, Link2, Zap } from "lucide-react";
 import type { ShortlinkResult, PublicLinkResponse } from "@/types";
 import ShortlinkResultModal from "./ShortlinkResultModal";
 import Link from "next/link";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function PublicShortlinkForm() {
     const [publicTarget, setPublicTarget] = useState("");
@@ -14,7 +15,7 @@ export default function PublicShortlinkForm() {
     const [publicError, setPublicError] = useState<string | null>(null);
     const [publicResult, setPublicResult] = useState<ShortlinkResult | null>(null);
     
-    const [agreed, setAgreed] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState("");
 
     const shortBaseUrl = 
         (process.env.NEXT_PUBLIC_SHORT_HOST || process.env.NEXT_PUBLIC_APP_HOST || "")
@@ -26,8 +27,8 @@ export default function PublicShortlinkForm() {
     async function handlePublicSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         
-        if (!agreed) {
-            setPublicError("Please agree to the Terms & Privacy Policy.");
+        if (!turnstileToken) {
+            setPublicError("Please complete the security check.");
             return;
         }
 
@@ -37,16 +38,22 @@ export default function PublicShortlinkForm() {
             const res = await fetch("/api/public-links", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ targetUrl: publicTarget }),
+                body: JSON.stringify({ 
+                    targetUrl: publicTarget,
+                    cfTurnstile: turnstileToken
+                }),
             });
 
             const data: PublicLinkResponse = await res.json().catch(() => ({} as PublicLinkResponse));
 
             if (!res.ok) {
+                if (res.status === 400 || res.status === 429) {
+                    setTurnstileToken(""); 
+                }
                 throw new Error(
                     typeof data.error === "string"
                         ? data.error
-                        : "Gagal membuat shortlink."
+                        : "Failed to create link."
                 );
             }
 
@@ -54,10 +61,9 @@ export default function PublicShortlinkForm() {
 
             setPublicResult({ slug: data.slug, shortUrl });
             setPublicTarget("");
-            setAgreed(false); 
         } catch (err) {
             const msg =
-                err instanceof Error ? err.message : "Gagal membuat shortlink.";
+                err instanceof Error ? err.message : "Failed to create link.";
             setPublicError(msg);
         } finally {
             setPublicLoading(false);
@@ -89,32 +95,31 @@ export default function PublicShortlinkForm() {
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <input 
-                            type="checkbox" 
-                            id="terms_agree" 
-                            className="w-4 h-4 accent-[var(--db-primary)] cursor-pointer shrink-0" 
-                            checked={agreed}
-                            onChange={(e) => setAgreed(e.target.checked)}
-                        />
-                        <label htmlFor="terms_agree" className="text-xs font-bold text-[var(--db-text-muted)] cursor-pointer select-none">
-                            I agree to the <Link href="/terms" target="_blank" className="underline hover:text-[var(--db-text)]">Terms of Service</Link> and <Link href="/privacy" target="_blank" className="underline hover:text-[var(--db-text)]">Privacy Policy</Link>.
-                        </label>
+                    <div className={`overflow-hidden transition-all duration-300 ${turnstileToken ? 'h-0 opacity-0 my-0' : 'h-auto opacity-100 my-2'}`}>
+                         <Turnstile 
+                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                            onSuccess={(token) => setTurnstileToken(token)}
+                            options={{ size: 'flexible', theme: 'light' }}
+                         />
                     </div>
 
                     {publicError && (
-                        <div className="bg-red-100 border-2 border-[var(--db-border)] text-red-600 p-2 text-xs font-bold">
-                            ERROR: {publicError}
+                        <div className="bg-[var(--db-danger)] text-white p-2 text-xs font-bold border-2 border-[var(--db-border)] flex items-center gap-2">
+                             <span>!</span> {publicError}
                         </div>
                     )}
 
                     <button
                         type="submit"
-                        disabled={publicLoading}
-                        className="w-full bg-[var(--db-text)] text-[var(--db-bg)] py-3 font-black text-sm uppercase border-2 border-[var(--db-border)] hover:bg-[var(--db-primary)] hover:text-white hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50"
+                        disabled={publicLoading || !turnstileToken}
+                        className="w-full bg-[var(--db-text)] text-[var(--db-bg)] py-3 font-black text-sm uppercase border-2 border-[var(--db-border)] hover:bg-[var(--db-primary)] hover:text-white hover:shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {publicLoading ? <Loader2 className="h-4 w-4 animate-spin mx-auto"/> : "SHORTEN NOW"}
                     </button>
+
+                    <p className="text-[10px] text-center font-bold text-[var(--db-text-muted)] leading-tight">
+                        By using this service, you agree to our <Link href="/terms" target="_blank" className="underline hover:text-[var(--db-text)]">Terms</Link> & <Link href="/privacy" target="_blank" className="underline hover:text-[var(--db-text)]">Privacy Policy</Link>.
+                    </p>
                 </form>
             </div>
 

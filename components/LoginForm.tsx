@@ -2,11 +2,10 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Loader2, Mail, Eye, EyeOff, Terminal } from "lucide-react";
 import type { LoginResponse } from "@/types";
-import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 interface LoginFormProps {
     nextPath?: string;
@@ -19,11 +18,6 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [cooldown, setCooldown] = useState<number | null>(null);
-    const [turnstileToken, setTurnstileToken] = useState("");
-
-    const turnstileRef = useRef<TurnstileInstance>(null);
-
-    const isTurnstileDone = !!turnstileToken;
 
     useEffect(() => {
         if (cooldown === null) return;
@@ -32,20 +26,10 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
         return () => clearInterval(id);
     }, [cooldown]);
 
-    const resetTurnstile = () => {
-        setTurnstileToken("");
-        turnstileRef.current?.reset();
-    };
-
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
         if (cooldown !== null && cooldown > 0) return;
         
-        if (!turnstileToken) {
-            setError("Please complete the security verification.");
-            return;
-        }
-
         setLoading(true); setError(null);
 
         try {
@@ -54,8 +38,7 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ 
                     email, 
-                    password,
-                    cfTurnstile: turnstileToken
+                    password
                 }),
             });
             const data: LoginResponse = await res.json().catch(() => ({}));
@@ -64,20 +47,16 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                 const retry = typeof data.retryAfter === "number" ? data.retryAfter : 60;
                 setCooldown(retry);
                 setError(`Too many attempts. Wait ${retry}s.`);
-                
-                resetTurnstile();
                 return;
             }
             
             if (!res.ok) {
-                resetTurnstile();
                 throw new Error(typeof data.error === "string" ? data.error : "Login failed");
             }
             
             window.location.href = nextPath;
         } catch (err) {
             setError(err instanceof Error ? err.message : "Login failed");
-            resetTurnstile();
         } finally {
             setLoading(false);
         }
@@ -112,7 +91,7 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                disabled={!isTurnstileDone && !loading}
+                                disabled={loading}
                             />
                             <Mail className="absolute right-4 top-3.5 h-5 w-5 text-[var(--db-text-muted)] pointer-events-none" />
                         </div>
@@ -135,37 +114,20 @@ export default function LoginForm({ nextPath = "/dash" }: LoginFormProps) {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                disabled={!isTurnstileDone && !loading}
+                                disabled={loading}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-4 top-3.5 text-[var(--db-text-muted)] hover:text-[var(--db-text)] hover:scale-110 transition-transform cursor-pointer"
-                                disabled={!isTurnstileDone && !loading}
+                                disabled={loading}
                             >
                                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                             </button>
                         </div>
                     </div>
 
-                    <div 
-                        className={`transition-all duration-500 ease-in-out overflow-hidden flex justify-center transform origin-top
-                            ${isTurnstileDone ? 'max-h-0 opacity-0 scale-95 pointer-events-none py-0' : 'max-h-[100px] opacity-100 scale-100 py-2'}`}
-                    >
-                        <Turnstile 
-                            ref={turnstileRef}
-                            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
-                            onSuccess={(token) => setTurnstileToken(token)}
-                            onError={() => setError("Failed to load security verification. Refresh the page.")}
-                            onExpire={() => setTurnstileToken("")}
-                            options={{ size: 'normal', theme: 'light' }}
-                        />
-                    </div>
-
-                    <div 
-                        className={`transition-all duration-500 ease-in-out overflow-hidden transform origin-bottom
-                            ${!isTurnstileDone ? 'max-h-0 opacity-0 scale-95 pointer-events-none' : 'max-h-[100px] opacity-100 scale-100'}`}
-                    >
+                    <div className="pt-2">
                         <button
                             type="submit"
                             disabled={loading || (cooldown !== null && cooldown > 0)}

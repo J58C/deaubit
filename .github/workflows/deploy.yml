@@ -63,7 +63,7 @@ jobs:
 
         cp -r .next/static/* .next/standalone/.next/static/
 
-    - name: Copy files to VPS
+    - name: Copy files
       uses: appleboy/scp-action@master
       with:
         host: ${{ secrets.VPS_HOST }}

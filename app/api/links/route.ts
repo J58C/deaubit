@@ -71,14 +71,23 @@ export async function POST(req: NextRequest) {
     }
 
     if (!slug) {
-      while (true) {
+      let attempts = 0;
+      const maxRetries = 5;
+      
+      while (attempts < maxRetries) {
         const candidate = generateRandomSlug(6);
         const existing = await prisma.shortLink.findUnique({ where: { slug: candidate } });
         if (!existing) {
           slug = candidate;
           break;
         }
+        attempts++;
       }
+
+      if (!slug) {
+         return NextResponse.json({ error: "Failed to generate a unique link. Please try again." }, { status: 500 });
+      }
+
     } else {
       if (!isValidSlug(slug)) {
          return NextResponse.json({ error: "Invalid slug format. Use alphanumeric, '-', or '_' only." }, { status: 400 });

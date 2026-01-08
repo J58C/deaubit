@@ -4,30 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { sendVerificationEmail } from "@/lib/mail";
-import { checkRateLimit } from "@/lib/rateLimit";
-import { verifyTurnstileToken } from "@/lib/turnstile";
+import { verifyTurnstileWithCookie } from "@/lib/turnstile";
+import { generateOTP } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const limit = await checkRateLimit(ip, "register");
-
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: `Terlalu banyak permintaan. Coba lagi nanti.` },
-      { status: 429 }
-    );
-  }
-
   try {
-    const { name, email, password, cfTurnstile } = await req.json();
+    const body = await req.json();
+    const { name, email, password, cfTurnstile } = body;
 
-    const isHuman = await verifyTurnstileToken(cfTurnstile || "");
-    if (!isHuman) {
-        return NextResponse.json({ error: "Verifikasi keamanan gagal. Silakan refresh halaman." }, { status: 400 });
+    const turnstileCheck = await verifyTurnstileWithCookie(req, cfTurnstile);
+    if (!turnstileCheck.success) {
+        return NextResponse.json({ error: "Security check failed (Captcha)." }, { status: 400 });
     }
 
     if (!email || !password) {
-      return NextResponse.json({ error: "Email dan password wajib diisi." }, { status: 400 });
+      return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
     let finalName = name;
@@ -36,38 +27,55 @@ export async function POST(req: NextRequest) {
         finalName = `User-${randomSuffix}`;
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOTP();
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (existingUser) {
       if (existingUser.verifiedAt) {
-        return NextResponse.json({ error: "Email sudah digunakan." }, { status: 400 });
+        const response = NextResponse.json({ error: "Email already registered." }, { status: 400 });
+        if (turnstileCheck.cookieAction) return turnstileCheck.cookieAction(response);
+        return response;
       }
+      
       await prisma.user.update({
         where: { email },
-        data: { name: finalName, password: hashedPassword, otpSecret: otp },
+        data: { 
+            name: finalName, 
+            password: hashedPassword, 
+            otpSecret: otp 
+        },
       });
     } else {
       await prisma.user.create({
-        data: { name: finalName, email, password: hashedPassword, otpSecret: otp },
+        data: { 
+            name: finalName, 
+            email, 
+            password: hashedPassword, 
+            otpSecret: otp 
+        },
       });
     }
 
     try {
       await sendVerificationEmail(email, otp);
     } catch (err) {
-      console.error("Gagal kirim email:", err);
-      return NextResponse.json(
-        { message: "Registrasi berhasil, namun email gagal. Coba login untuk kirim ulang." },
+      console.error("Failed to send email:", err);
+      const response = NextResponse.json(
+        { message: "Registration successful, but failed to send email. Login to resend." },
         { status: 201 }
       );
+      if (turnstileCheck.cookieAction) return turnstileCheck.cookieAction(response);
+      return response;
     }
 
-    return NextResponse.json({ message: "Kode verifikasi terkirim." }, { status: 201 });
+    const response = NextResponse.json({ message: "Verification code sent." }, { status: 201 });
+    if (turnstileCheck.cookieAction) return turnstileCheck.cookieAction(response);
+    return response;
 
   } catch (error) {
+    console.error("Register Error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

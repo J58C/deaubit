@@ -3,68 +3,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateRandomSlug } from "@/lib/slug";
-import { checkRateLimit } from "@/lib/rateLimit";
-
-interface CreateLinkRequest {
-  targetUrl?: string;
-}
+import { sanitizeAndValidateUrl } from "@/lib/validation";
+import { verifyTurnstileWithCookie } from "@/lib/turnstile";
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const limit = await checkRateLimit(ip, "public_link");
-
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: `Limit tercapai. Tunggu ${Math.ceil((limit.retryAfter || 60) / 60)} menit.` },
-      { status: 429 }
-    );
-  }
-
-  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 });
-  }
+    const { targetUrl, cfTurnstile } = await req.json();
 
-  const targetUrl = String((body as CreateLinkRequest)?.targetUrl || "").trim();
-
-  if (!targetUrl || !/^https?:\/\//i.test(targetUrl)) {
-    return NextResponse.json(
-      { error: "Target URL tidak valid. Sertakan http(s)://" },
-      { status: 400 }
-    );
-  }
-
-  let slug: string;
-  while (true) {
-    const candidate = generateRandomSlug(6);
-    const existing = await prisma.shortLink.findUnique({ where: { slug: candidate } });
-    if (!existing) {
-      slug = candidate;
-      break;
+    const turnstileCheck = await verifyTurnstileWithCookie(req, cfTurnstile);
+    if (!turnstileCheck.success) {
+        return NextResponse.json({ error: "Security check failed." }, { status: 400 });
     }
+
+    const cleanUrl = sanitizeAndValidateUrl(targetUrl);
+    if (!cleanUrl) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    }
+
+    let slug = generateRandomSlug(6);
+    let retries = 0;
+    while (retries < 5) {
+      const exists = await prisma.shortLink.findUnique({ where: { slug } });
+      if (!exists) break;
+      slug = generateRandomSlug(6);
+      retries++;
+    }
+
+    if (retries >= 5) {
+        return NextResponse.json({ error: "Server busy, try again." }, { status: 500 });
+    }
+
+    const link = await prisma.shortLink.create({
+      data: {
+        slug,
+        targetUrl: cleanUrl,
+        userId: null,
+      },
+    });
+    
+    const shortUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://deau.bit"}/${link.slug}`;
+
+    const response = NextResponse.json({ shortUrl }, { status: 201 });
+    
+    if (turnstileCheck.cookieAction) {
+        return turnstileCheck.cookieAction(response);
+    }
+    
+    return response;
+
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
-
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 1);
-
-  const link = await prisma.shortLink.create({
-    data: { 
-      slug, 
-      targetUrl,
-      expiresAt,
-    },
-  });
-
-  return NextResponse.json(
-    {
-      id: link.id,
-      slug: link.slug,
-      targetUrl: link.targetUrl,
-      createdAt: link.createdAt,
-      expiresAt: link.expiresAt,
-    },
-    { status: 201 }
-  );
 }

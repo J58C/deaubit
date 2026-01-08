@@ -2,10 +2,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Mail, FileSignature, Check, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -15,10 +16,14 @@ export default function RegisterForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [agreed, setAgreed] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>(""); 
   const router = useRouter();
+  const turnstileRef = useRef<TurnstileInstance>(null);
+
+  const isTurnstileDone = !!turnstileToken;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,14 +36,20 @@ export default function RegisterForm() {
         return;
     }
 
+    if (!turnstileToken) {
+        setError("Please complete the security check.");
+        setLoading(false);
+        return;
+    }
+
     if (formData.password !== confirmPassword) {
-      setError("Password tidak cocok.");
+      setError("Passwords do not match.");
       setLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
-        setError("Password minimal 6 karakter.");
+        setError("Password must be at least 6 characters.");
         setLoading(false);
         return;
     }
@@ -47,16 +58,22 @@ export default function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, cfTurnstile: turnstileToken }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Registrasi gagal");
+      if (!res.ok) {
+          if (res.status === 400 && data.error?.includes("Security")) {
+             turnstileRef.current?.reset();
+             setTurnstileToken("");
+          }
+          throw new Error(data.error || "Registration failed.");
+      }
 
       router.push(`/verify?email=${encodeURIComponent(formData.email)}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+      setError(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -160,6 +177,15 @@ export default function RegisterForm() {
                 I agree to the <Link href="/terms" target="_blank" className="underline hover:text-[var(--db-text)]">Terms of Service</Link> & <Link href="/privacy" target="_blank" className="underline hover:text-[var(--db-text)]">Privacy Policy</Link>.
             </label>
         </div>
+        
+        <div className={`overflow-hidden transition-all duration-300 ${isTurnstileDone ? 'h-0 opacity-0 my-0' : 'h-auto opacity-100 my-2'}`}>
+             <Turnstile 
+                ref={turnstileRef}
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                onSuccess={(token) => setTurnstileToken(token)}
+                options={{ size: 'flexible', theme: 'light' }}
+             />
+        </div>
 
         <div className="min-h-[3rem] w-full flex items-center justify-center px-1 py-1">
             <div 
@@ -182,8 +208,8 @@ export default function RegisterForm() {
 
         <button 
             type="submit" 
-            disabled={loading} 
-            className="w-full mt-0 bg-[var(--db-text)] text-[var(--db-bg)] border-2 border-[var(--db-border)] py-3 font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 transition-all disabled:opacity-50 text-sm"
+            disabled={loading || !isTurnstileDone || !agreed} 
+            className="w-full mt-0 bg-[var(--db-text)] text-[var(--db-bg)] border-2 border-[var(--db-border)] py-3 font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 transition-all disabled:opacity-50 text-sm disabled:cursor-not-allowed"
         >
             {loading ? <Loader2 className="animate-spin mx-auto w-5 h-5"/> : "CREATE ACCOUNT"}
         </button>

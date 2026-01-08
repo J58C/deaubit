@@ -2,88 +2,136 @@
 
 "use client";
 
-import { useState } from "react";
-import DeauBitLogo from "@/components/DeauBitLogo";
+import { useState, useRef } from "react";
 import Link from "next/link";
-import { Loader2, Mail, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import DeauBitLogo from "@/components/DeauBitLogo";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  
+  const turnstileRef = useRef<TurnstileInstance>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true); setMessage(""); setError("");
+    if (!turnstileToken) {
+        setError("Please complete the security verification.");
+        return;
+    }
+    
+    setLoading(true);
+    setError(null);
 
     try {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, cfTurnstile: turnstileToken }),
       });
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setMessage(data.message);
+      if (!res.ok) {
+          if (res.status === 400 && data.error?.includes("Security")) {
+              turnstileRef.current?.reset();
+              setTurnstileToken("");
+          }
+          throw new Error(data.error || "Request failed");
+      }
+
+      setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
+  if (success) {
+      return (
+        <div className="min-h-screen bg-[var(--db-bg)] flex items-center justify-center p-4">
+             <div className="w-full max-w-md bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[8px_8px_0px_0px_var(--db-border)] text-center">
+                <div className="inline-flex p-4 bg-[var(--db-success)] border-4 border-[var(--db-border)] rounded-full mb-6 shadow-[4px_4px_0px_0px_var(--db-border)]">
+                    <CheckCircle2 className="h-12 w-12 text-white" />
+                </div>
+                <h2 className="text-2xl font-black uppercase text-[var(--db-text)] mb-2">CHECK YOUR INBOX</h2>
+                <p className="text-sm font-bold text-[var(--db-text-muted)] mb-8">
+                    If an account exists for {email}, we have sent password reset instructions.
+                </p>
+                <Link href="/login" className="block w-full bg-[var(--db-text)] text-[var(--db-bg)] py-4 font-black uppercase border-2 border-[var(--db-border)] hover:shadow-[6px_6px_0px_0px_var(--db-border)] hover:-translate-y-1 transition-all">
+                    BACK TO LOGIN
+                </Link>
+             </div>
+        </div>
+      );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--db-bg)] flex flex-col items-center justify-center p-4">
       <div className="mb-8">
-         <DeauBitLogo size={60} />
+           <DeauBitLogo size={60} />
       </div>
-
+      
       <div className="w-full max-w-md bg-[var(--db-surface)] border-4 border-[var(--db-border)] p-8 shadow-[12px_12px_0px_0px_var(--db-border)]">
-        <h1 className="text-3xl font-black uppercase mb-2 text-[var(--db-text)]">Reset Password</h1>
-        <p className="text-sm font-bold text-[var(--db-text-muted)] mb-8">Don't worry, happens to the best of us.</p>
-
-        {message ? (
-          <div className="bg-[var(--db-success)] text-white border-4 border-[var(--db-border)] p-6 text-center shadow-[4px_4px_0px_0px_var(--db-border)]">
-            <p className="font-black text-lg uppercase mb-2">Check Your Email!</p>
-            <p className="text-sm font-medium">{message}</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+        
+        <div className="flex items-center gap-4 mb-8 border-b-4 border-[var(--db-border)] pb-4">
+            <div className="bg-[var(--db-accent)] p-3 border-2 border-[var(--db-border)]">
+                <KeyRound className="h-6 w-6 text-[var(--db-accent-fg)]" />
+            </div>
             <div>
-              <label className="font-black text-xs uppercase mb-2 block text-[var(--db-text)]">Email Address</label>
-              <div className="relative">
-                <input 
-                  type="email" 
-                  className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] p-4 font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:text-[var(--db-text-muted)]" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  required 
-                  placeholder="user@example.com" 
-                />
-                <Mail className="absolute right-4 top-4 text-[var(--db-text-muted)] h-6 w-6" />
-              </div>
+                <h1 className="text-xl font-black uppercase tracking-tighter text-[var(--db-text)]">RESET PASSWORD</h1>
+                <p className="text-xs font-bold text-[var(--db-text-muted)] uppercase">Recover Access</p>
+            </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+                <label className="font-black text-xs uppercase tracking-wider mb-2 block text-[var(--db-text)]">Email Address</label>
+                <div className="relative">
+                    <input 
+                        type="email" 
+                        required 
+                        className="w-full bg-[var(--db-bg)] border-2 border-[var(--db-border)] px-4 py-3 text-sm font-bold text-[var(--db-text)] focus:outline-none focus:shadow-[4px_4px_0px_0px_var(--db-border)] transition-all placeholder:font-normal"
+                        placeholder="user@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                    <Mail className="absolute right-4 top-3 text-[var(--db-text-muted)] h-5 w-5" />
+                </div>
+            </div>
+
+            <div className={`overflow-hidden transition-all duration-300 ${turnstileToken ? 'h-0 opacity-0 my-0' : 'h-auto opacity-100 my-4'}`}>
+                 <Turnstile 
+                    ref={turnstileRef}
+                    siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    options={{ size: 'normal', theme: 'light' }}
+                 />
             </div>
 
             {error && (
-              <div className="bg-[var(--db-danger)] text-white font-bold p-3 border-2 border-[var(--db-border)] text-sm shadow-[4px_4px_0px_0px_var(--db-border)]">
-                ❌ {error}
-              </div>
+                <div className="bg-[var(--db-danger)] text-white text-xs font-bold p-3 border-2 border-[var(--db-border)] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="h-4 w-4"/> {error}
+                </div>
             )}
 
             <button 
-              disabled={loading} 
-              className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] py-4 font-black uppercase border-2 border-[var(--db-border)] shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                type="submit" 
+                disabled={loading || !turnstileToken}
+                className="w-full bg-[var(--db-primary)] text-[var(--db-primary-fg)] border-2 border-[var(--db-border)] py-4 font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_var(--db-border)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_var(--db-border)] active:translate-y-0 active:shadow-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? <Loader2 className="animate-spin mx-auto h-6 w-6"/> : "SEND RESET LINK"}
+                {loading ? <Loader2 className="animate-spin mx-auto h-5 w-5"/> : "SEND RESET LINK"}
             </button>
-          </form>
-        )}
+        </form>
 
-        <div className="mt-8 pt-6 border-t-4 border-dotted border-[var(--db-border)] text-center">
-          <Link href="/" className="inline-flex items-center gap-2 font-bold text-sm text-[var(--db-text)] hover:bg-[var(--db-accent)] px-2 py-1 border-2 border-transparent hover:border-[var(--db-border)] transition-all">
-            <ArrowLeft className="h-4 w-4" /> Back to Login
-          </Link>
+        <div className="mt-6 text-center">
+            <Link href="/login" className="inline-flex items-center gap-2 text-xs font-bold text-[var(--db-text-muted)] hover:text-[var(--db-text)] transition-colors">
+                <ArrowLeft className="h-3 w-3" /> Back to Login
+            </Link>
         </div>
       </div>
     </div>
