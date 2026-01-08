@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis"; 
 import { generateRandomSlug } from "@/lib/slug";
 import bcrypt from "bcryptjs";
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
@@ -102,8 +101,6 @@ export async function POST(req: NextRequest) {
         userId: user.id
       },
     });
-
-    await redis.set(`shortlink:${link.slug}`, JSON.stringify(link), "EX", 3600);
 
     return NextResponse.json(link, { status: 201 });
   } catch (err) {

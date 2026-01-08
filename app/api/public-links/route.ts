@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis";
 import { generateRandomSlug } from "@/lib/slug";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -57,8 +56,6 @@ export async function POST(req: NextRequest) {
       expiresAt,
     },
   });
-
-  await redis.set(`shortlink:${link.slug}`, JSON.stringify(link), "EX", 3600);
 
   return NextResponse.json(
     {

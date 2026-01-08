@@ -1,7 +1,6 @@
 // app/[slug]/page.tsx
 
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis"; 
 import Link from "next/link";
 import SlugRedirector from "@/components/SlugRedirector";
 import PasswordGuard from "@/components/PasswordGuard";
@@ -18,22 +17,9 @@ export default async function ShortRedirectPage({ params }: ShortRedirectPagePro
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
   
-  let link: any = null;
-  const cacheKey = `shortlink:${slug}`;
-  const cachedData = await redis.get(cacheKey);
-  
-  if (cachedData) {
-    const parsed = JSON.parse(cachedData);
-    link = {
-        ...parsed,
-        expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
-    };
-  } else {
-    link = await prisma.shortLink.findFirst({ where: { OR: [{ slug }, { id: slug }] } });
-    if (link) {
-        await redis.set(cacheKey, JSON.stringify(link), "EX", 3600);
-    }
-  }
+  const link = await prisma.shortLink.findFirst({ 
+    where: { OR: [{ slug }, { id: slug }] } 
+  });
 
   const ErrorCard = ({ title, msg }: { title: string, msg: string }) => (
     <div className="min-h-screen w-full flex items-center justify-center px-4 bg-[var(--db-bg)]">

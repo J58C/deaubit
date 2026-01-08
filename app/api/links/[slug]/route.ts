@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { redis } from "@/lib/redis"; 
 import { SESSION_COOKIE_NAME, verifyUserJWT } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 import { sanitizeAndValidateUrl } from "@/lib/validation";
@@ -44,12 +43,6 @@ export async function DELETE(
     await prisma.shortLink.delete({
       where: { id: existing.id },
     });
-
-    try {
-        await redis.del(`shortlink:${existing.slug}`);
-    } catch (redisErr) {
-        console.error("Redis Delete Error:", redisErr);
-    }
 
     return NextResponse.json({ ok: true });
 
@@ -103,12 +96,6 @@ export async function PATCH(
       where: { id: existing.id },
       data: updateData,
     });
-
-    try {
-        await redis.set(`shortlink:${existing.slug}`, JSON.stringify(updatedLink), "EX", 3600);
-    } catch (redisErr) {
-        console.error("Redis Update Error:", redisErr);
-    }
 
     return NextResponse.json(updatedLink);
 
